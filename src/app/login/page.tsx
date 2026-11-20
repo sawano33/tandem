@@ -6,10 +6,11 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import { IS_DEMO, DEMO_E, DEMO_G, setDemoUser } from "@/lib/demo";
 import { Wordmark } from "@/components/Logo";
 import { cx } from "@/components/ui";
+import { ArrowRight, Check } from "lucide-react";
 
 const PEOPLE = [
-  { key: "G", name: "Guillaume", demoId: DEMO_G, grad: "linear-gradient(140deg,#E1D6FB 0%,#C5B6F2 55%,#9583E0 100%)" },
-  { key: "E", name: "Emma", demoId: DEMO_E, grad: "linear-gradient(140deg,#FFD0BF 0%,#FFAE97 55%,#F3A9C8 100%)" },
+  { key: "G", name: "Guillaume", demoId: DEMO_G, grad: "linear-gradient(145deg,#EDE6FD 0%,#C5B6F2 60%,#A897EA 100%)" },
+  { key: "E", name: "Emma", demoId: DEMO_E, grad: "linear-gradient(145deg,#FFE0D5 0%,#FFAE97 60%,#F59C8A 100%)" },
 ];
 
 export default function LoginPage() {
@@ -58,45 +59,66 @@ function Login() {
   return (
     <div className="bg-grad-page min-h-dvh">
       <main className="pt-safe pb-safe mx-auto flex min-h-dvh max-w-md flex-col px-6">
-        <div className="pt-10">
-          <Wordmark height={52} />
-          <p className="font-display mt-5 text-[30px] font-medium italic leading-[1.1] text-ink">Deux vies. Un équilibre.</p>
-          <p className="mt-2 text-[15px] text-muted">Qui se connecte ?</p>
+        {/* Marque */}
+        <div className="stagger flex flex-1 flex-col items-center justify-center pt-10 text-center">
+          <Wordmark height={44} />
+          <p className="font-display mt-4 text-[21px] font-medium italic text-ink/85">Deux vies. Un équilibre.</p>
+
+          {/* Choix du profil */}
+          <p className="mt-14 text-[14px] font-medium text-muted">Qui se connecte ?</p>
+          <div className="mt-6 flex items-start justify-center gap-10" role="radiogroup" aria-label="Profil">
+            {PEOPLE.map((p) => {
+              const on = who?.key === p.key;
+              return (
+                <button
+                  key={p.key}
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => {
+                    setWho(p);
+                    setError(null);
+                  }}
+                  className={cx("group flex flex-col items-center gap-3 transition-opacity duration-300", who && !on && "opacity-40")}
+                >
+                  <span
+                    className={cx(
+                      "relative flex h-[104px] w-[104px] items-center justify-center rounded-full transition-transform duration-300 ease-out",
+                      on ? "scale-105" : "group-active:scale-95",
+                    )}
+                    style={{ background: p.grad }}
+                  >
+                    <span className="font-num text-[42px] font-semibold text-aubergine">{p.key}</span>
+                    <span
+                      className={cx(
+                        "pointer-events-none absolute -inset-[7px] rounded-full border-2 transition-all duration-300",
+                        on ? "border-lilas opacity-100" : "border-transparent opacity-0",
+                      )}
+                    />
+                    {on && (
+                      <span className="animate-fade absolute -bottom-0.5 -right-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-lilas text-aubergine ring-4 ring-bg">
+                        <Check size={17} strokeWidth={3} />
+                      </span>
+                    )}
+                  </span>
+                  <span className={cx("text-[16px] font-semibold", on ? "text-ink" : "text-ink/80")}>{p.name}</span>
+                </button>
+              );
+            })}
+          </div>
+          {error && <p className="mt-6 text-sm font-medium text-over">{error}</p>}
         </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          {PEOPLE.map((p) => (
-            <button
-              key={p.key}
-              onClick={() => {
-                setWho(p);
-                setError(null);
-              }}
-              className={cx(
-                "press relative flex aspect-[4/5] flex-col justify-between overflow-hidden rounded-[28px] p-4 text-left text-aubergine transition-all",
-                who && who.key !== p.key && "scale-[0.96] opacity-40",
-                who?.key === p.key && "ring-4 ring-aubergine/80 dark:ring-lilas",
-              )}
-              style={{ background: p.grad }}
-            >
-              <span className="font-display text-[64px] font-semibold leading-none">{p.key}</span>
-              <span className="text-lg font-semibold">{p.name}</span>
-              <svg viewBox="0 0 100 100" className="absolute -bottom-6 -right-6 h-28 w-28 opacity-30" aria-hidden>
-                <circle cx="50" cy="50" r="38" fill="none" stroke="#fff" strokeWidth="14" />
-              </svg>
-            </button>
-          ))}
-        </div>
-
-        {error && <p className="mt-4 text-center text-sm font-medium text-over">{error}</p>}
-
-        <div className="mt-auto pt-6">
+        {/* Action */}
+        <div className="pb-4 pt-8">
           <button
             onClick={signIn}
             disabled={!who || loading}
-            className="press bg-grad-cta h-14 w-full rounded-2xl text-[17px] font-semibold text-aubergine disabled:opacity-35"
+            className={cx(
+              "press flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-[16px] font-semibold transition-colors duration-300",
+              who ? "bg-grad-cta text-aubergine" : "bg-surface text-muted",
+            )}
           >
-            {loading ? "Connexion…" : who ? `Se connecter en tant que ${who.name}` : "Se connecter"}
+            {loading ? "Connexion…" : who ? <>Continuer en tant que {who.name} <ArrowRight size={18} /></> : "Choisis ton profil"}
           </button>
           <p className="mt-3 text-center text-xs text-muted">
             {IS_DEMO ? "Mode démo : données fictives, rien n'est enregistré." : "Ton choix est retenu sur cet appareil."}
