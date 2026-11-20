@@ -268,15 +268,36 @@ export function usageSlices(params: {
   monthTx: Transaction[]; scope: Scope; categories: Category[]; income: number; saving: number; pendingCharges: number;
 }) {
   const { monthTx, scope, categories, income, saving, pendingCharges } = params;
-  const cats = byCategory(monthTx, scope, categories).map((c) => ({ ...c, kind: "expense" as const }));
-  const spent = cats.reduce((s, c) => s + c.cents, 0);
-  const slices: { id: string; name: string; color: string; icon: string; cents: number; kind: "expense" | "saving" | "pending" | "left" }[] = [...cats];
+  const all = byCategory(monthTx, scope, categories).map((c) => ({ ...c, kind: "expense" as const }));
+  const spent = all.reduce((s, c) => s + c.cents, 0);
+  // Les petites catégories (< 4 % des revenus) sont regroupées pour garder un camembert lisible
+  const base0 = Math.max(income, spent + saving + pendingCharges) || 1;
+  const big = all.filter((c) => c.cents / base0 >= 0.04 && c.name !== "Autres");
+  const small = all.filter((c) => !big.includes(c));
+  const cats = [...big];
+  if (small.length) {
+    cats.push({
+      id: "others", name: small.length === 1 ? small[0].name : "Autres", icon: "ellipsis", color: "#8E84AE", kind: "expense",
+      cents: small.reduce((s, c) => s + c.cents, 0), share: 0,
+      detail: small.map((c) => c.name).join(", "),
+    } as (typeof all)[number] & { detail: string });
+  }
+  const slices: { id: string; name: string; color: string; icon: string; cents: number; kind: "expense" | "saving" | "pending" | "left"; detail?: string }[] = [...cats];
   if (saving > 0) slices.push({ id: "saving", name: "Épargne", color: "#F4EFF8", icon: "piggy-bank", cents: saving, kind: "saving" });
   if (pendingCharges > 0) slices.push({ id: "pending", name: "Charges à venir", color: "#5A4C8E", icon: "calendar-clock", cents: pendingCharges, kind: "pending" });
   const left = income - spent - saving - pendingCharges;
-  if (left > 0) slices.push({ id: "left", name: "Reste disponible", color: "#433873", icon: "wallet", cents: left, kind: "left" });
+  if (left > 0) slices.push({ id: "left", name: "Reste", color: "#433873", icon: "wallet", cents: left, kind: "left" });
   const base = Math.max(income, spent + saving + pendingCharges);
-  return { slices: slices.map((s) => ({ ...s, share: base ? s.cents / base : 0 })), base, left, overspent: left < 0 ? -left : 0 };
+  return {
+    slices: slices.map((s) => ({ ...s, share: base ? s.cents / base : 0 })),
+    groups: [
+      { id: "spent", name: "Dépensé", cents: spent, color: "#FFAE97" },
+      { id: "saving", name: "Épargné", cents: saving, color: "#F4EFF8" },
+      { id: "pending", name: "À venir", cents: pendingCharges, color: "#7563C4" },
+      { id: "left", name: "Reste", cents: Math.max(0, left), color: "#433873" },
+    ].map((g) => ({ ...g, share: base ? g.cents / base : 0 })),
+    base, left, overspent: left < 0 ? -left : 0,
+  };
 }
 
 /** Dépenses cumulées jour par jour (pour la courbe « Mon mois »). */

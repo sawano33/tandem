@@ -4,8 +4,9 @@ import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useData } from "@/lib/store";
 import { addMonths, money, moneyShort, monthKey, monthLabel, monthShort, monthStart } from "@/lib/format";
-import { byCategory, totals, txBetween } from "@/lib/finance";
-import { Bars, Donut, SplitBar } from "@/components/Charts";
+import { totals, txBetween, usageSlices } from "@/lib/finance";
+import { UsageCard } from "@/components/UsageCard";
+import { Bars, SplitBar } from "@/components/Charts";
 import { ScopeSwitcher } from "@/components/Switchers";
 import { Avatar, Card, Page, PageHeader, Segmented, SectionTitle } from "@/components/ui";
 
@@ -39,7 +40,6 @@ export default function StatsPage() {
   const cur = totals(txs, scope);
   const prev = totals(txBetween(d.transactions, prevR.from, prevR.to), scope);
   const diff = cur.expense - prev.expense;
-  const cats = byCategory(txs, scope, d.categories);
 
   // Évolution : 6 derniers mois pour un mois, sinon les mois de la période
   const months =
@@ -120,33 +120,14 @@ export default function StatsPage() {
         </Card>
       </div>
 
-      {/* Par catégorie */}
-      <SectionTitle>Par catégorie</SectionTitle>
-      <Card>
-        <div className="flex items-center gap-4">
-          <Donut
-            size={136}
-            thickness={18}
-            segments={cats.map((c) => ({ value: c.cents, color: c.color }))}
-            center={
-              <>
-                <span className="font-num tabular text-[17px] font-semibold text-ink">{moneyShort(cur.expense)}</span>
-                <span className="text-[11px] text-muted">dépensés</span>
-              </>
-            }
-          />
-          <ul className="min-w-0 flex-1 space-y-1.5">
-            {cats.slice(0, 6).map((c) => (
-              <li key={c.id} className="flex items-center gap-2 text-[13px]">
-                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: c.color }} />
-                <span className="min-w-0 flex-1 truncate text-ink">{c.name}</span>
-                <span className="tabular text-muted">{Math.round(c.share * 100)} %</span>
-              </li>
-            ))}
-            {cats.length === 0 && <li className="text-sm text-muted">Aucune dépense sur la période.</li>}
-          </ul>
-        </div>
-      </Card>
+      {/* Par catégorie : même camembert que l'accueil */}
+      <div className="mt-6">
+        <UsageCard
+          title="Utilisation"
+          income={cur.income}
+          usage={usageSlices({ monthTx: txs, scope, categories: d.categories, income: cur.income, saving: cur.saving, pendingCharges: 0 })}
+        />
+      </div>
 
       {/* Évolution */}
       <SectionTitle>Évolution mensuelle</SectionTitle>

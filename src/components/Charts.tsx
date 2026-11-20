@@ -137,7 +137,7 @@ export function Pie({
           angle = a1;
           const mid = (a0 + a1) / 2;
           const isSel = selected === s.id;
-          const push = isSel ? 8 : 0;
+          const push = isSel ? 10 : 0;
           const dx = Math.cos(mid) * push;
           const dy = Math.sin(mid) * push;
           const rad = r - 10;
@@ -155,10 +155,10 @@ export function Pie({
               key={s.id}
               transform={`translate(${dx} ${dy})`}
               onClick={() => onSelect?.(isSel ? null : s.id)}
-              style={{ cursor: "pointer", transition: "transform 250ms ease", opacity: selected && !isSel ? 0.45 : 1 }}
+              style={{ cursor: "pointer", transition: "transform 300ms cubic-bezier(0.32,0.72,0,1), opacity 200ms", opacity: selected && !isSel ? 0.35 : 1 }}
             >
-              <path d={d} fill={s.color} stroke="var(--surface)" strokeWidth={2} strokeLinejoin="round" />
-              {share >= 0.07 && (
+              <path d={d} fill={s.color} stroke="var(--surface)" strokeWidth={3} strokeLinejoin="round" />
+              {share >= 0.08 && (
                 <text x={lx} y={ly} textAnchor="middle" dominantBaseline="central" className="tabular" fontSize={13} fontWeight={700} fill={isDark(s.color) ? "#F4EFF8" : "#1F1838"}>
                   {Math.round(share * 100)}%
                 </text>

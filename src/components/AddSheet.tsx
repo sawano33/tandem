@@ -242,6 +242,23 @@ export function AddSheet() {
         )
       )}
 
+      {/* Pour qui */}
+      {d.members.length > 0 && (
+        <>
+          <p className="mb-2 mt-5 px-1 text-[13px] font-medium text-muted">{kind === "income" ? "Revenu de" : kind === "saving" ? "Épargne de" : "Qui a payé"}</p>
+          <div className="flex flex-wrap gap-2">
+            {d.members.map((m) => (
+              <Chip key={m.user_id} active={assigned === m.user_id} onClick={() => setAssigned(m.user_id)}>
+                {m.profile?.first_name || "…"}
+              </Chip>
+            ))}
+            <Chip active={assigned === null} onClick={() => setAssigned(null)}>
+              Commun
+            </Chip>
+          </div>
+        </>
+      )}
+
       {/* Catégorie */}
       {kind !== "saving" && (
         <>
@@ -278,23 +295,6 @@ export function AddSheet() {
             ))}
           </div>
           <p className="mt-2 px-1 text-xs text-muted">L&apos;épargne n&apos;est pas une dépense : elle apparaît à part dans le camembert.</p>
-        </>
-      )}
-
-      {/* Pour qui */}
-      {d.members.length > 0 && (
-        <>
-          <p className="mb-2 mt-5 px-1 text-[13px] font-medium text-muted">{kind === "income" ? "Revenu de" : kind === "saving" ? "Épargne de" : "Qui a payé"}</p>
-          <div className="flex flex-wrap gap-2">
-            {d.members.map((m) => (
-              <Chip key={m.user_id} active={assigned === m.user_id} onClick={() => setAssigned(m.user_id)}>
-                {m.profile?.first_name || "…"}
-              </Chip>
-            ))}
-            <Chip active={assigned === null} onClick={() => setAssigned(null)}>
-              Commun
-            </Chip>
-          </div>
         </>
       )}
 

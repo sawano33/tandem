@@ -13,7 +13,8 @@ import {
 import { IconBubble } from "@/lib/icons";
 import { LogoLoop } from "@/components/Logo";
 import { MonthSwitcher, ScopeSwitcher } from "@/components/Switchers";
-import { Pie, SplitBar } from "@/components/Charts";
+import { SplitBar } from "@/components/Charts";
+import { UsageCard } from "@/components/UsageCard";
 import { Avatar, Card, Page, Progress, SectionTitle, cx } from "@/components/ui";
 
 export default function HomePage() {
@@ -21,7 +22,6 @@ export default function HomePage() {
   const { scope, month } = d;
   const router = useRouter();
   const [explain, setExplain] = useState(false);
-  const [slice, setSlice] = useState<string | null>(null);
 
   const memberIds = d.members.map((m) => m.user_id);
   const planned = d.household?.split_settings?.incomes;
@@ -31,7 +31,6 @@ export default function HomePage() {
   );
   const monthTx = useMemo(() => txOfMonth(d.transactions, month), [d.transactions, month]);
   const usage = usageSlices({ monthTx, scope, categories: d.categories, income: s.income, saving: s.saving, pendingCharges: s.isPast ? 0 : s.pendingCharges });
-  const sel = usage.slices.find((x) => x.id === slice);
 
   const alerts = budgetLines(d.budgets, d.categories, d.transactions, month).filter((l) => l.level !== "ok");
   const charges = s.isCurrent ? upcomingCharges(d.recurring_expenses, d.scheduled_transactions, scope) : s.occ.filter((o) => o.status === "pending").slice(0, 4);
@@ -54,7 +53,7 @@ export default function HomePage() {
       id: m.user_id, name: m.profile?.first_name ?? "…", color: m.profile?.color ?? "#C5B6F2", profile: m.profile,
       cents: monthTx.filter((t) => t.kind === "expense" && t.assigned_to === m.user_id).reduce((a, t) => a + t.amount_cents, 0),
     })),
-    { id: "common", name: "Commun", color: "#F4EFF8", profile: undefined, cents: monthTx.filter((t) => t.kind === "expense" && t.assigned_to === null).reduce((a, t) => a + t.amount_cents, 0) },
+    { id: "common", name: "Commun", color: "#8E84AE", profile: undefined, cents: monthTx.filter((t) => t.kind === "expense" && t.assigned_to === null).reduce((a, t) => a + t.amount_cents, 0) },
   ];
   const topCatFor = (who: string | null) => byCategory(monthTx.filter((t) => t.assigned_to === who), "all", d.categories)[0];
 
@@ -127,45 +126,9 @@ export default function HomePage() {
       })()}
 
       {/* Camembert d'utilisation */}
-      <SectionTitle href="/stats" action="Analyse">Utilisation du budget</SectionTitle>
-      <Card className="!p-5">
-        <div className="flex flex-col items-center">
-          <Pie size={232} slices={usage.slices.map((x) => ({ id: x.id, value: x.cents, color: x.color }))} selected={slice} onSelect={setSlice} />
-          <div className="mt-4 min-h-12 text-center">
-            {sel ? (
-              <>
-                <p className="font-num tabular text-[24px] font-semibold text-ink">{money(sel.cents)}</p>
-                <p className="text-[13px] text-muted">
-                  {sel.name} · {Math.round(sel.share * 100)} % des revenus
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="font-num tabular text-[24px] font-semibold text-ink">{money(s.income)}</p>
-                <p className="text-[13px] text-muted">
-                  de revenus{s.estimated ? " (salaire prévu)" : ""} · touchez une part
-                </p>
-              </>
-            )}
-          </div>
-        </div>
-        {usage.overspent > 0 && (
-          <p className="mt-3 rounded-2xl bg-over/12 px-4 py-2.5 text-center text-sm font-medium text-over">
-            Dépassement de {money(usage.overspent)} sur les revenus du mois
-          </p>
-        )}
-        <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2.5">
-          {usage.slices.map((x) => (
-            <li key={x.id}>
-              <button onClick={() => setSlice(slice === x.id ? null : x.id)} className={cx("flex w-full items-center gap-2 text-left text-[13px]", slice && slice !== x.id && "opacity-45")}>
-                <span className="h-3 w-3 shrink-0 rounded-[4px]" style={{ background: x.color }} />
-                <span className="min-w-0 flex-1 truncate text-ink">{x.name}</span>
-                <span className="tabular text-muted">{Math.round(x.share * 100)}%</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </Card>
+      <div className="mt-3">
+        <UsageCard usage={usage} income={s.income} estimated={s.estimated} />
+      </div>
 
       {/* Alertes */}
       {(inRed.length > 0 || alerts.length > 0) && (
@@ -207,8 +170,11 @@ export default function HomePage() {
                   <span className="truncate text-sm font-medium text-ink">{profile?.first_name}</span>
                 </div>
                 <p className={cx("font-num tabular mt-2 text-[22px] font-semibold", f.left < 0 ? "text-over" : "text-ink")}>{money(f.left)}</p>
-                <p className="text-[11.5px] leading-snug text-muted">
-                  sur {moneyShort(f.income)} · {f.saving > 0 ? `${moneyShort(f.saving)} épargnés` : "rien d'épargné"}
+                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-track">
+                  <div className="h-full rounded-full" style={{ width: `${Math.max(0, Math.min(100, f.income ? (f.left / f.income) * 100 : 0))}%`, background: profile?.color ?? "#C5B6F2" }} />
+                </div>
+                <p className="mt-1.5 text-[11.5px] leading-snug text-muted">
+                  restants sur {moneyShort(f.income)} · {f.saving > 0 ? `${moneyShort(f.saving)} épargnés` : "rien d'épargné"}
                 </p>
               </Card>
             ))}
@@ -227,7 +193,7 @@ export default function HomePage() {
                 const top = topCatFor(p.id === "common" ? null : p.id);
                 return (
                   <div key={p.id} className="flex items-center gap-3">
-                    {p.profile ? <Avatar profile={p.profile} size={34} /> : <span className="h-[34px] w-[34px] shrink-0 rounded-full bg-lilas" />}
+                    {p.profile ? <Avatar profile={p.profile} size={34} /> : <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-[#8E84AE] text-[13px] font-semibold text-aubergine">G+E</span>}
                     <span className="min-w-0 flex-1">
                       <span className="block text-[15px] font-medium text-ink">{p.name}</span>
                       <span className="block truncate text-[12px] text-muted">{top ? `Surtout ${top.name.toLowerCase()} · ${moneyShort(top.cents)}` : "Rien ce mois-ci"}</span>

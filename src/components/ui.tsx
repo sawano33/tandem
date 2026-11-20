@@ -40,7 +40,7 @@ export function Card({ children, className, onClick }: { children: ReactNode; cl
     <Tag
       onClick={onClick}
       className={cx(
-        "block w-full rounded-[22px] bg-surface p-4 text-left shadow-[0_1px_2px_rgba(37,29,64,0.04),0_8px_24px_-12px_rgba(37,29,64,0.12)]",
+        "block w-full rounded-[22px] border border-line/70 bg-surface p-4 text-left",
         onClick && "press",
         className,
       )}
