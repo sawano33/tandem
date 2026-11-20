@@ -79,27 +79,52 @@ export default function HomePage() {
       <ScopeSwitcher className="mt-5" />
       <MonthSwitcher className="mt-4" />
 
-      {/* Reste du mois */}
-      <section className="animate-rise bg-grad-hero relative mt-4 overflow-hidden rounded-[26px] p-5 text-aubergine">
-        <svg viewBox="0 0 200 140" className="pointer-events-none absolute -bottom-6 -right-6 h-40 w-56" aria-hidden>
-          <path d="M40 160 C40 90 90 50 150 50 C185 50 210 70 210 70 L210 160Z" fill="#251D40" />
-          <path d="M120 160 C120 95 150 30 205 25" fill="none" stroke="#C5B6F2" strokeWidth="26" strokeLinecap="round" />
-        </svg>
-        <button onClick={() => setExplain((v) => !v)} className="relative flex items-center gap-1.5 text-[17px] font-semibold">
-          <span className="font-display">{s.isPast ? "Bilan du mois" : "Reste à vivre"}</span>
-          <Info size={16} className="opacity-70" />
-        </button>
-        <p className="font-num tabular relative mt-1 text-[42px] font-semibold leading-none">{money(s.resteAVivre)}</p>
-        <p className="relative mt-2 max-w-[60%] text-[13px] opacity-80">
-          {s.isPast ? "revenus − dépenses − épargne" : `jusqu'au ${daysInMonth(month)} ${monthName(month)}`}
-        </p>
-        {explain && (
-          <p className="animate-fade relative mt-3 max-w-[72%] rounded-2xl bg-white/55 p-3 text-[12.5px] leading-snug">
-            Revenus {money(s.income)}{s.estimated ? " (salaire prévu)" : ""} − dépenses {money(s.expense)} − épargne {money(s.saving)}
-            {!s.isPast && ` − charges à venir ${money(s.pendingCharges)}`}.
-          </p>
-        )}
-      </section>
+      {/* Reste du mois : carte sobre, chiffre en grand, revenus / dépenses / épargne dessous */}
+      {(() => {
+        const engaged = s.expense + s.saving + (s.isPast ? 0 : s.pendingCharges);
+        const ratio = s.income ? engaged / s.income : 0;
+        return (
+          <section className="animate-rise mt-4 rounded-[26px] border border-line bg-surface p-5">
+            <div className="flex items-center justify-between">
+              <button onClick={() => setExplain((v) => !v)} className="flex items-center gap-1.5 text-[14px] font-medium text-muted">
+                {s.isPast ? "Bilan du mois" : "Reste à vivre"} <Info size={14} />
+              </button>
+              {!s.isPast && (
+                <span className="rounded-full bg-surface-2 px-2.5 py-1 text-[12px] font-medium text-muted">
+                  jusqu&apos;au {daysInMonth(month)} {monthName(month)}
+                </span>
+              )}
+            </div>
+            <p className={cx("font-num tabular mt-1 text-[44px] font-semibold leading-tight", s.resteAVivre < 0 ? "text-over" : "text-ink")}>
+              {money(s.resteAVivre)}
+            </p>
+            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-track">
+              <div
+                className="h-full rounded-full transition-[width] duration-700"
+                style={{ width: `${Math.min(100, ratio * 100)}%`, background: ratio > 1 ? "#FF7D8C" : "linear-gradient(90deg,#FFAE97,#C5B6F2)" }}
+              />
+            </div>
+            <p className="mt-1.5 text-[12px] text-muted">{Math.round(ratio * 100)} % des revenus déjà engagés</p>
+            {explain && (
+              <p className="animate-fade mt-3 rounded-2xl bg-surface-2 p-3 text-[12.5px] leading-snug text-muted">
+                Revenus{s.estimated ? " (salaire prévu)" : ""} − dépenses − épargne{!s.isPast && " − charges fixes encore à venir"}.
+              </p>
+            )}
+            <div className="mt-4 grid grid-cols-3 gap-2 border-t border-line pt-4">
+              {[
+                ["Revenus", s.income, "text-ok"],
+                ["Dépenses", s.expense, "text-peche"],
+                ["Épargne", s.saving, "text-lavande"],
+              ].map(([label, v, c]) => (
+                <div key={label as string}>
+                  <p className={cx("text-[12px] font-medium", c as string)}>{label as string}</p>
+                  <p className="font-num tabular text-[16px] font-semibold text-ink">{money(v as number).replace(/,\d\d\s?€/, " €")}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Camembert d'utilisation */}
       <SectionTitle href="/stats" action="Analyse">Utilisation du budget</SectionTitle>
