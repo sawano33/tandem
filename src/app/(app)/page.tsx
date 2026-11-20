@@ -62,16 +62,17 @@ export default function HomePage() {
 
   return (
     <Page>
-      <header className="flex items-center gap-3 pt-2">
-        <h1 className="min-w-0 flex-1">
-          <LogoLoop size={30} withWord />
-        </h1>
-        <Link href="/budgets" aria-label="Alertes" className="press relative flex h-10 w-10 items-center justify-center rounded-full bg-surface text-ink">
+      {/* En-tête : logo animé au centre, alertes à gauche, profil à droite */}
+      <header className="grid grid-cols-[48px_1fr_48px] items-center pt-2">
+        <Link href="/budgets" aria-label="Alertes" className="press relative flex h-11 w-11 items-center justify-center rounded-full bg-surface text-ink">
           <Bell size={20} />
           {(alerts.length > 0 || inRed.length > 0) && <span className="breathe absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-peche ring-2 ring-surface" />}
         </Link>
-        <Link href="/profil" aria-label="Profil">
-          <Avatar profile={d.me} size={40} />
+        <h1 className="flex justify-center">
+          <LogoLoop size={44} withWord />
+        </h1>
+        <Link href="/profil" aria-label="Profil" className="justify-self-end">
+          <Avatar profile={d.me} size={44} />
         </Link>
       </header>
 
