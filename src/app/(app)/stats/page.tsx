@@ -96,7 +96,7 @@ export default function StatsPage() {
         <button aria-label="Période précédente" onClick={() => setOffset(offset - 1)} className="press flex h-10 w-10 items-center justify-center rounded-full bg-surface">
           <ChevronLeft size={20} />
         </button>
-        <span className="font-display text-lg font-semibold text-ink">{r.label}</span>
+        <span className="font-num text-[17px] font-semibold text-ink">{r.label}</span>
         <button aria-label="Période suivante" onClick={() => setOffset(offset + 1)} className="press flex h-10 w-10 items-center justify-center rounded-full bg-surface">
           <ChevronRight size={20} />
         </button>
@@ -106,14 +106,14 @@ export default function StatsPage() {
       <div className="mt-4 grid grid-cols-2 gap-3">
         <Card>
           <p className="text-[13px] text-muted">Dépenses</p>
-          <p className="font-display tabular text-[22px] font-semibold text-ink">{money(cur.expense)}</p>
+          <p className="font-num tabular text-[22px] font-semibold text-ink">{money(cur.expense)}</p>
           <p className={`text-[12px] font-medium ${diff > 0 ? "text-over" : "text-ok"}`}>
             {prev.expense ? `${diff > 0 ? "+" : "−"}${moneyShort(Math.abs(diff))} vs période préc.` : "—"}
           </p>
         </Card>
         <Card>
           <p className="text-[13px] text-muted">Revenus</p>
-          <p className="font-display tabular text-[22px] font-semibold text-ink">{money(cur.income)}</p>
+          <p className="font-num tabular text-[22px] font-semibold text-ink">{money(cur.income)}</p>
           <p className={`text-[12px] font-medium ${cur.net >= 0 ? "text-ok" : "text-over"}`}>
             Solde {cur.net >= 0 ? "+" : "−"}{moneyShort(Math.abs(cur.net))}
           </p>
@@ -130,7 +130,7 @@ export default function StatsPage() {
             segments={cats.map((c) => ({ value: c.cents, color: c.color }))}
             center={
               <>
-                <span className="font-display tabular text-[17px] font-semibold text-ink">{moneyShort(cur.expense)}</span>
+                <span className="font-num tabular text-[17px] font-semibold text-ink">{moneyShort(cur.expense)}</span>
                 <span className="text-[11px] text-muted">dépensés</span>
               </>
             }

@@ -47,7 +47,7 @@ export default function PartenairePage() {
           <p className="mt-1 text-sm opacity-80">Un code à 6 caractères, à saisir lors de sa première connexion.</p>
           {code ? (
             <>
-              <p className="font-display mt-4 text-center text-[40px] font-semibold tracking-[0.3em]">{code}</p>
+              <p className="font-num mt-4 text-center text-[40px] font-semibold tracking-[0.3em]">{code}</p>
               <div className="mt-3 flex gap-2">
                 <Button onClick={share} className="bg-grad-night !text-white"><Share2 size={18} /> Partager</Button>
                 <button onClick={() => navigator.clipboard.writeText(code).then(() => d.toast("Code copié"))} className="press flex h-13 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/60" aria-label="Copier">

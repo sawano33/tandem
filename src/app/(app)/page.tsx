@@ -89,7 +89,7 @@ export default function HomePage() {
           <span className="font-display">{s.isPast ? "Bilan du mois" : "Reste à vivre"}</span>
           <Info size={16} className="opacity-70" />
         </button>
-        <p className="font-display tabular relative mt-1 text-[42px] font-semibold leading-none">{money(s.resteAVivre)}</p>
+        <p className="font-num tabular relative mt-1 text-[42px] font-semibold leading-none">{money(s.resteAVivre)}</p>
         <p className="relative mt-2 max-w-[60%] text-[13px] opacity-80">
           {s.isPast ? "revenus − dépenses − épargne" : `jusqu'au ${daysInMonth(month)} ${monthName(month)}`}
         </p>
@@ -109,14 +109,14 @@ export default function HomePage() {
           <div className="mt-4 min-h-12 text-center">
             {sel ? (
               <>
-                <p className="font-display tabular text-[24px] font-semibold text-ink">{money(sel.cents)}</p>
+                <p className="font-num tabular text-[24px] font-semibold text-ink">{money(sel.cents)}</p>
                 <p className="text-[13px] text-muted">
                   {sel.name} · {Math.round(sel.share * 100)} % des revenus
                 </p>
               </>
             ) : (
               <>
-                <p className="font-display tabular text-[24px] font-semibold text-ink">{money(s.income)}</p>
+                <p className="font-num tabular text-[24px] font-semibold text-ink">{money(s.income)}</p>
                 <p className="text-[13px] text-muted">
                   de revenus{s.estimated ? " (salaire prévu)" : ""} · touchez une part
                 </p>
@@ -181,7 +181,7 @@ export default function HomePage() {
                   <Avatar profile={profile} size={26} />
                   <span className="truncate text-sm font-medium text-ink">{profile?.first_name}</span>
                 </div>
-                <p className={cx("font-display tabular mt-2 text-[22px] font-semibold", f.left < 0 ? "text-over" : "text-ink")}>{money(f.left)}</p>
+                <p className={cx("font-num tabular mt-2 text-[22px] font-semibold", f.left < 0 ? "text-over" : "text-ink")}>{money(f.left)}</p>
                 <p className="text-[11.5px] leading-snug text-muted">
                   sur {moneyShort(f.income)} · {f.saving > 0 ? `${moneyShort(f.saving)} épargnés` : "rien d'épargné"}
                 </p>
@@ -261,7 +261,7 @@ export default function HomePage() {
             <span className="mb-2 block h-1 w-10 rounded-full" style={{ background: a.color }} />
             <p className="truncate text-[13px] text-muted">{a.owner_id ? d.nameOf(a.owner_id) : "Commun"}</p>
             <p className="truncate text-[12px] text-muted/80">{a.name.replace(/ (Guillaume|Emma)$/, "")}</p>
-            <p className="font-display tabular mt-1 text-[20px] font-semibold text-ink">{money(a.balance_cents)}</p>
+            <p className="font-num tabular mt-1 text-[20px] font-semibold text-ink">{money(a.balance_cents)}</p>
           </Card>
         ))}
       </div>

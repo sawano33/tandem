@@ -73,7 +73,7 @@ function BudgetsView({ adding, setAdding }: { adding: boolean; setAdding: (v: bo
         <>
           <Card className="mt-4">
             <div className="flex items-baseline justify-between">
-              <p className="font-display tabular text-[28px] font-semibold text-ink">{money(total - spent)}</p>
+              <p className="font-num tabular text-[28px] font-semibold text-ink">{money(total - spent)}</p>
               <p className="text-sm text-muted">{pct(spent, total)} % utilisé</p>
             </div>
             <p className="text-[13px] text-muted">restants sur {money(total)} budgétés</p>
@@ -234,7 +234,7 @@ function SavingsView({ adding, setAdding }: { adding: boolean; setAdding: (v: bo
                         {g.target_date && ` · ${dayShort(g.target_date)} ${g.target_date.slice(0, 4)}`}
                       </p>
                     </div>
-                    <span className="font-display tabular text-lg font-semibold text-ink">{pct(sv, g.target_cents)} %</span>
+                    <span className="font-num tabular text-lg font-semibold text-ink">{pct(sv, g.target_cents)} %</span>
                   </div>
                   <Progress ratio={sv / g.target_cents} color={g.color} className="mt-3" />
                   <div className="mt-1.5 flex justify-between text-[12px] text-muted">
@@ -316,7 +316,7 @@ function GoalDetail({ goal, onClose, onEdit }: { goal: SavingsGoal | null; onClo
     <Sheet open={!!goal} onClose={onClose} title={g.name}>
       <div className="flex flex-col items-center text-center">
         <IconBubble name={g.icon} color={g.color} size={64} />
-        <p className="font-display tabular mt-3 text-[34px] font-semibold text-ink">{money(sv)}</p>
+        <p className="font-num tabular mt-3 text-[34px] font-semibold text-ink">{money(sv)}</p>
         <p className="text-sm text-muted">sur {money(g.target_cents)} · {pct(sv, g.target_cents)} %</p>
         <Progress ratio={sv / g.target_cents} color={g.color} className="mt-3" />
       </div>

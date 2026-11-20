@@ -77,7 +77,7 @@ export default function OnboardingPage() {
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 maxLength={6}
-                className={`${inputClass} font-display text-center text-2xl tracking-[0.4em]`}
+                className={`${inputClass} font-num text-center text-2xl tracking-[0.4em]`}
               />
             </Field>
           )}

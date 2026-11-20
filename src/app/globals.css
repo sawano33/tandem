@@ -168,3 +168,10 @@ body {
   background-clip: text;
   color: transparent;
 }
+
+/* Chiffres : Inter (lisible, moderne), chiffres à chasse fixe, approche resserrée — Fraunces reste pour les titres */
+.font-num {
+  font-family: var(--font-sans);
+  font-feature-settings: "tnum" 1, "cv11" 1;
+  letter-spacing: -0.03em;
+}

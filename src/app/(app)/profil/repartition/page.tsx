@@ -55,7 +55,7 @@ export default function RepartitionPage() {
               value={incomes[id] ?? ""}
               onChange={(e) => setIncomes({ ...incomes, [id]: e.target.value })}
               inputMode="decimal"
-              className={cx(inputClass, "font-display h-11 text-lg")}
+              className={cx(inputClass, "font-num h-11 text-lg")}
               aria-label={`Salaire de ${profile(id)?.first_name}`}
             />
           </Card>
@@ -92,7 +92,7 @@ export default function RepartitionPage() {
       {/* Résultat */}
       <Card className="bg-grad-night mt-5 !p-5 text-white">
         <p className="text-sm text-white/70">Dépenses communes par mois</p>
-        <p className="font-display tabular text-[30px] font-semibold">{money(result.base)}</p>
+        <p className="font-num tabular text-[30px] font-semibold">{money(result.base)}</p>
         <p className="text-[12px] text-white/60">
           Charges fixes communes {money(result.commonFixed)} · moyenne réelle des 3 derniers mois {money(result.commonAvg)}
         </p>
@@ -108,7 +108,7 @@ export default function RepartitionPage() {
                 <p className="text-[12px] text-muted">{Math.round(l.share * 100)} % des dépenses communes</p>
               </div>
               <div className="text-right">
-                <p className="font-display tabular text-xl font-semibold text-ink">{money(l.contribution)}</p>
+                <p className="font-num tabular text-xl font-semibold text-ink">{money(l.contribution)}</p>
                 <p className="text-[12px] text-muted">du commun</p>
               </div>
             </div>

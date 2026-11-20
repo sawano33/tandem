@@ -19,7 +19,7 @@ export function InvestSection() {
     <>
       <Card className="bg-grad-night mt-4 !p-5 text-white">
         <p className="text-sm text-white/70">Épargne investie</p>
-        <p className="font-display tabular text-[32px] font-semibold">{money(total)}</p>
+        <p className="font-num tabular text-[32px] font-semibold">{money(total)}</p>
         <div className="mt-3 flex gap-3">
           {accounts.map((a) => (
             <span key={a.id} className="flex items-center gap-1.5 text-[13px] text-white/80">
@@ -49,7 +49,7 @@ export function InvestSection() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-display tabular text-lg font-semibold text-ink">{money(a.balance_cents)}</p>
+                  <p className="font-num tabular text-lg font-semibold text-ink">{money(a.balance_cents)}</p>
                   {gain !== null && (
                     <p className={cx("tabular flex items-center justify-end gap-1 text-[12px] font-medium", gain >= 0 ? "text-ok" : "text-over")}>
                       {gain >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
@@ -156,7 +156,7 @@ function InvestSheet({ item, onClose }: { item: Account | "new" | null; onClose:
 
         {mode === "global" ? (
           <Field label="Valeur actuelle (€)" hint="Mettez-la à jour quand vous voulez, en un geste.">
-            <input value={value} onChange={(e) => setValue(e.target.value)} inputMode="decimal" placeholder="0" className={cx(inputClass, "font-display text-xl")} />
+            <input value={value} onChange={(e) => setValue(e.target.value)} inputMode="decimal" placeholder="0" className={cx(inputClass, "font-num text-xl")} />
           </Field>
         ) : !live ? (
           <p className="px-1 text-sm text-muted">Enregistrez d&apos;abord le compte, puis ajoutez vos ETF.</p>

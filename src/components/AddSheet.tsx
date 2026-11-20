@@ -201,10 +201,10 @@ export function AddSheet() {
           inputMode="decimal"
           placeholder="0"
           aria-label="Montant"
-          className="font-display tabular w-full min-w-0 bg-transparent text-center text-[52px] font-semibold leading-none text-ink outline-none placeholder:text-muted/40"
+          className="font-num tabular w-full min-w-0 bg-transparent text-center text-[52px] font-semibold leading-none text-ink outline-none placeholder:text-muted/40"
           onKeyDown={(e) => e.key === "Enter" && save()}
         />
-        <span className="font-display -ml-2 text-3xl font-semibold text-muted">€</span>
+        <span className="font-num -ml-2 text-3xl font-semibold text-muted">€</span>
       </div>
 
       <input

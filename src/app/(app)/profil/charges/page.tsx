@@ -39,7 +39,7 @@ export default function ChargesPage() {
       />
       <Card className="bg-grad-night !p-5 text-white">
         <p className="text-sm text-white/70">Charges fixes par mois (moyenne)</p>
-        <p className="font-display tabular text-[32px] font-semibold">{money(Math.round(monthly))}</p>
+        <p className="font-num tabular text-[32px] font-semibold">{money(Math.round(monthly))}</p>
         <p className="mt-1 text-[13px] text-white/70">
           Ce mois-ci : {occ.filter((o) => o.status === "paid").length} réglées · {occ.filter((o) => o.status === "pending").length} à venir
         </p>

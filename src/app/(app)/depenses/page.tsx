@@ -52,7 +52,7 @@ export default function DepensesPage() {
       <MonthSwitcher className="mt-4" />
 
       <Card className="mt-4">
-        <p className="font-display tabular text-[34px] font-semibold leading-tight text-ink">{money(expense)}</p>
+        <p className="font-num tabular text-[34px] font-semibold leading-tight text-ink">{money(expense)}</p>
         <p className="text-[13px] text-muted">
           {delta === null ? "dépensés ce mois-ci" : `${delta > 0 ? "+" : ""}${delta} % par rapport au mois précédent`}
         </p>

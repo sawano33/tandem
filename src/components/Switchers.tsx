@@ -42,7 +42,7 @@ export function MonthSwitcher({ className }: { className?: string }) {
         <ChevronLeft size={20} />
       </button>
       <button onClick={() => setMonth(monthStart(new Date()))} className="flex flex-col items-center">
-        <span className="font-display text-lg font-semibold text-ink">{monthLabel(month)}</span>
+        <span className="font-num text-[17px] font-semibold text-ink">{monthLabel(month)}</span>
         {!isNow && <span className="text-[11px] font-medium text-muted">Revenir à ce mois</span>}
       </button>
       <button aria-label="Mois suivant" onClick={() => setMonth(addMonths(month, 1))} className="press flex h-10 w-10 items-center justify-center rounded-full bg-surface text-ink">
