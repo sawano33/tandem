@@ -7,8 +7,9 @@ import { toCSV } from "@/lib/csv";
 import { Avatar, Card, ListRow, Page, PageHeader } from "@/components/ui";
 
 
-const Bubble = ({ children, bg }: { children: ReactNode; bg: string }) => (
-  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-aubergine" style={{ background: bg }}>
+/* Icônes sobres : même fond pour toutes, seule la déconnexion est en rouge */
+const Bubble = ({ children, danger }: { children: ReactNode; danger?: boolean }) => (
+  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${danger ? "bg-over/12 text-over" : "bg-surface-2 text-lavande"}`}>
     {children}
   </span>
 );
@@ -34,28 +35,33 @@ export default function ProfilPage() {
     <Page>
       <PageHeader title="Profil" />
 
-      <Card className="bg-grad-hero flex items-center gap-4 !p-5 text-aubergine">
-        <Avatar profile={d.me} size={64} ring />
+      <Card className="flex items-center gap-4 !p-5">
+        <Avatar profile={d.me} size={60} />
         <div className="min-w-0 flex-1">
-          <p className="font-display truncate text-[24px] font-semibold">{d.me?.first_name || "Moi"}</p>
-          <p className="truncate text-sm opacity-75">{d.household?.name}</p>
+          <p className="font-display truncate text-[24px] font-semibold text-ink">{d.me?.first_name || "Moi"}</p>
+          <p className="truncate text-sm text-muted">{d.household?.name}</p>
         </div>
-        {d.partner && <Avatar profile={d.partner} size={40} ring />}
+        {d.partner && (
+          <div className="flex flex-col items-center gap-1">
+            <Avatar profile={d.partner} size={34} />
+            <span className="text-[11px] text-muted">{d.partner.first_name}</span>
+          </div>
+        )}
       </Card>
 
       <Card className="mt-4 py-1.5">
-        <ListRow href="/profil/moi" left={<Bubble bg="#9583E0"><UserRound size={18} /></Bubble>} title="Prénom et avatar" right={chev} />
-        <ListRow href="/profil/categories" left={<Bubble bg="#C5B6F2"><Shapes size={18} /></Bubble>} title="Catégories" right={chev} />
-        <ListRow href="/profil/charges" left={<Bubble bg="#FF8A70"><Repeat size={18} /></Bubble>} title="Charges fixes" subtitle={`${d.recurring_expenses.filter((r) => r.active).length} prélèvements`} right={chev} />
-        <ListRow href="/profil/partenaire" left={<Bubble bg="#F3A9C8"><Users size={18} /></Bubble>} title="Partenaire" subtitle={d.partner ? d.partner.first_name : "Inviter"} right={chev} />
-        <ListRow href="/profil/repartition" left={<Bubble bg="#B49CF0"><Scale size={18} /></Bubble>} title="Répartition à deux" subtitle="Qui paie combien du commun" right={chev} />
-        <ListRow href="/profil/notifications" left={<Bubble bg="#FFAE97"><Bell size={18} /></Bubble>} title="Notifications" right={chev} />
+        <ListRow href="/profil/moi" left={<Bubble><UserRound size={18} /></Bubble>} title="Prénom et avatar" right={chev} />
+        <ListRow href="/profil/categories" left={<Bubble><Shapes size={18} /></Bubble>} title="Catégories" right={chev} />
+        <ListRow href="/profil/charges" left={<Bubble><Repeat size={18} /></Bubble>} title="Charges fixes" subtitle={`${d.recurring_expenses.filter((r) => r.active).length} prélèvements`} right={chev} />
+        <ListRow href="/profil/partenaire" left={<Bubble><Users size={18} /></Bubble>} title="Partenaire" subtitle={d.partner ? d.partner.first_name : "Inviter"} right={chev} />
+        <ListRow href="/profil/repartition" left={<Bubble><Scale size={18} /></Bubble>} title="Répartition à deux" subtitle="Qui paie combien du commun" right={chev} />
+        <ListRow href="/profil/notifications" left={<Bubble><Bell size={18} /></Bubble>} title="Notifications" right={chev} />
       </Card>
 
 
       <Card className="mt-4 py-1.5">
-        <ListRow onClick={exportCSV} left={<Bubble bg="#7563C4"><Download size={18} /></Bubble>} title="Exporter en CSV" subtitle="Tout l'historique des opérations" />
-        <ListRow onClick={d.signOut} left={<Bubble bg="#E87F95"><LogOut size={18} /></Bubble>} title={<span className="text-over">Se déconnecter</span>} />
+        <ListRow onClick={exportCSV} left={<Bubble><Download size={18} /></Bubble>} title="Exporter en CSV" subtitle="Tout l'historique des opérations" />
+        <ListRow onClick={d.signOut} left={<Bubble danger><LogOut size={18} /></Bubble>} title={<span className="text-over">Se déconnecter</span>} />
       </Card>
 
       <p className="mt-6 text-center text-xs text-muted">TANDEM · Deux vies. Un équilibre.{d.demo && " · Mode démo"}</p>
