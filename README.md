@@ -14,6 +14,9 @@ Next.js 15 · TypeScript · Tailwind CSS 4 · Supabase (auth, base, temps réel,
 
 ## 1. Supabase
 
+> Projet déjà créé : **tandem** (organisation NOMA, région Paris), migrations appliquées. URL : `https://uacqlwmorewzibmrispe.supabase.co`. Les étapes ci-dessous servent si vous repartez de zéro.
+
+
 1. Créez un projet sur [supabase.com](https://supabase.com).
 2. **SQL Editor** : exécutez dans l'ordre les fichiers de `supabase/migrations/` :
    - `20261119000001_tandem_schema.sql` — tables, RLS, fonctions, temps réel
@@ -56,6 +59,9 @@ Ouvrez http://localhost:3000 : écran **G / E**, puis code à 6 chiffres.
 Ensuite, tout ce que l'un ajoute apparaît immédiatement chez l'autre (Supabase Realtime).
 
 ## 4. Déployer sur Vercel
+
+> Projet Vercel **tandem** déjà créé (équipe NullStudio's projects) avec les variables Supabase. Il reste à le relier au dépôt GitHub.
+
 
 1. Poussez le dépôt sur GitHub, puis **Vercel → Add New → Project** et importez-le.
 2. Ajoutez les mêmes variables d'environnement.

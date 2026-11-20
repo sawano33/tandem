@@ -34,3 +34,5 @@ begin
     alter publication supabase_realtime add table public.holdings, public.households;
   end if;
 end $$;
+
+revoke execute on function public.invitation_preview(text) from anon;
