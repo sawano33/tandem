@@ -19,7 +19,7 @@ export function PageHeader({
 }: { title: string; back?: string; right?: ReactNode; subtitle?: string }) {
   return (
     <header className="mb-5 flex min-h-11 items-center gap-2 pt-2">
-      <LogoLoop size={38} />
+      <LogoLoop size={24} />
       {back && (
         <Link href={back} aria-label="Retour" className="press -mr-1 flex h-10 w-8 items-center justify-center rounded-full text-ink">
           <ChevronLeft size={24} />

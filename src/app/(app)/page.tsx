@@ -69,7 +69,7 @@ export default function HomePage() {
           {(alerts.length > 0 || inRed.length > 0) && <span className="breathe absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-peche ring-2 ring-surface" />}
         </Link>
         <h1 className="flex justify-center">
-          <LogoLoop size={44} withWord />
+          <LogoLoop size={26} wordHeight={26} withWord />
         </h1>
         <Link href="/profil" aria-label="Profil" className="justify-self-end">
           <Avatar profile={d.me} size={44} />

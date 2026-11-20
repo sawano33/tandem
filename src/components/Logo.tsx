@@ -36,11 +36,11 @@ function Letters({ height, className }: { height: number; className: string }) {
  * le cercle se secoue et fait sortir les lettres une par une, une vague traverse le mot,
  * le cercle les ravale puis se retourne comme une carte, et ça recommence.
  */
-export function LogoLoop({ size = 30, withWord = false }: { size?: number; withWord?: boolean }) {
+export function LogoLoop({ size = 24, withWord = false, wordHeight }: { size?: number; withWord?: boolean; wordHeight?: number }) {
   return (
-    <span className="inline-flex shrink-0 items-center gap-2" role="img" aria-label="TANDEM">
+    <span className="inline-flex shrink-0 items-center gap-2.5" role="img" aria-label="TANDEM">
       <LogoMark size={size} animated />
-      {withWord && <Letters height={size * 0.8} className="letter-anim" />}
+      {withWord && <Letters height={wordHeight ?? size} className="letter-anim" />}
     </span>
   );
 }
@@ -75,11 +75,11 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
   return (
     <div className={`splash ${leaving ? "leaving" : ""}`} aria-hidden>
       <div className="flex flex-col items-center">
-        <span className="splash-mark relative block" style={{ width: Math.round(120 * RATIO), height: 120 }}>
+        <span className="splash-mark relative block" style={{ width: Math.round(72 * RATIO), height: 72 }}>
           <img src={markTop} alt="" className="splash-top absolute inset-0 h-full w-full" draggable={false} />
           <img src={markBottom} alt="" className="splash-bottom absolute inset-0 h-full w-full" draggable={false} />
         </span>
-        <span className="splash-word mt-7">
+        <span className="splash-word mt-6">
           <Letters height={H} className="splash-letter" />
         </span>
         <span className="splash-rule mt-3.5" style={{ width: (WORD_LETTERS[5][1] / WORD_H) * H }} />
