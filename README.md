@@ -24,11 +24,7 @@ Next.js 15 · TypeScript · Tailwind CSS 4 · Supabase (auth, base, temps réel,
    - `20261119000003_notifications.sql` — préférences de notifications
    - `20261119000004_invest_split.sql` — comptes d'investissement, lignes ETF, réglages de répartition
    (ou `supabase db push` avec la CLI Supabase).
-3. **Authentication → Users → Add user** : créez deux utilisateurs
-   - l'e-mail de Guillaume avec un **code à 6 chiffres** comme mot de passe
-   - l'e-mail d'Emma avec son propre code à 6 chiffres
-   Cochez « Auto confirm user ».
-4. **Authentication → Sign In / Providers** : vous pouvez désactiver les inscriptions publiques (« Allow new users to sign up ») — seuls vos deux comptes existent.
+3. **Edge Function** `supabase/functions/tandem-login` (déjà déployée sur le projet tandem) : connexion en un geste, comme MAISON. Le premier qui se connecte crée le foyer ; le second le rejoint automatiquement. Aucun e-mail, aucun mot de passe. Compromis assumé : quiconque a l'adresse de l'app peut se connecter.
 
 ## 2. Variables d'environnement
 
@@ -37,8 +33,6 @@ Copiez `.env.example` en `.env.local` :
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=…           # clé publique (anon / publishable)
-NEXT_PUBLIC_EMAIL_GUILLAUME=…             # e-mail créé à l'étape 3
-NEXT_PUBLIC_EMAIL_EMMA=…
 NEXT_PUBLIC_DEMO=0
 ```
 
@@ -51,10 +45,9 @@ npm install
 npm run dev
 ```
 
-Ouvrez http://localhost:3000 : écran **G / E**, puis code à 6 chiffres.
+Ouvrez http://localhost:3000 : écran **G / E**, puis « Se connecter ».
 
-- **Premier lancement (Guillaume)** : écran « Créer le foyer » → crée le foyer et les catégories par défaut (animaux compris dans Courses, catégorie Crédits). Ajoutez ensuite vos comptes Trade Republic dans Budgets → Épargne.
-- **Emma** : Guillaume génère un code dans **Profil → Partenaire**, Emma se connecte et choisit « Rejoindre ».
+- **Premier lancement** : le premier qui touche son bouton (G ou E) crée le foyer et les catégories ; l'autre le rejoint automatiquement en touchant le sien.
 
 Ensuite, tout ce que l'un ajoute apparaît immédiatement chez l'autre (Supabase Realtime).
 
@@ -90,7 +83,7 @@ Elles s'affichent quand l'app est ouverte ou en arrière-plan récent. Pour les 
 
 - RLS active sur toutes les tables : seuls les membres du foyer accèdent aux données.
 - Montants en **centimes entiers** (`bigint`), identifiants **UUID**.
-- Connexion G / E : derrière chaque bouton, un vrai compte Supabase protégé par un code à 6 chiffres (limité en tentatives par Supabase). La session reste ouverte sur l'appareil.
+- Connexion G / E comme MAISON : derrière chaque bouton, un vrai compte Supabase créé par la fonction `tandem-login`. La session reste ouverte sur l'appareil.
 
 ## Structure
 

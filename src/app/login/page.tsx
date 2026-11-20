@@ -2,15 +2,14 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Delete, Lock } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { IS_DEMO, DEMO_E, DEMO_G, setDemoUser } from "@/lib/demo";
 import { Wordmark } from "@/components/Logo";
 import { cx } from "@/components/ui";
 
 const PEOPLE = [
-  { key: "G", name: "Guillaume", email: process.env.NEXT_PUBLIC_EMAIL_GUILLAUME, demoId: DEMO_G, grad: "linear-gradient(140deg,#E1D6FB 0%,#C5B6F2 55%,#9583E0 100%)" },
-  { key: "E", name: "Emma", email: process.env.NEXT_PUBLIC_EMAIL_EMMA, demoId: DEMO_E, grad: "linear-gradient(140deg,#FFD0BF 0%,#FFAE97 55%,#F3A9C8 100%)" },
+  { key: "G", name: "Guillaume", demoId: DEMO_G, grad: "linear-gradient(140deg,#E1D6FB 0%,#C5B6F2 55%,#9583E0 100%)" },
+  { key: "E", name: "Emma", demoId: DEMO_E, grad: "linear-gradient(140deg,#FFD0BF 0%,#FFAE97 55%,#F3A9C8 100%)" },
 ];
 
 export default function LoginPage() {
@@ -25,7 +24,6 @@ function Login() {
   const router = useRouter();
   const next = useSearchParams().get("next") || "/";
   const [who, setWho] = useState<(typeof PEOPLE)[number] | null>(null);
-  const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -37,28 +35,25 @@ function Login() {
       router.replace(next);
       return;
     }
-    if (code.length !== 6) return;
-    if (!who.email) {
-      setError(`L'e-mail de ${who.name} n'est pas configuré (voir README).`);
-      return;
-    }
+    // Comme MAISON : connexion en un geste, sans e-mail ni mot de passe (fonction Supabase « tandem-login »)
     setLoading(true);
-    const { error } = await supabaseBrowser().auth.signInWithPassword({ email: who.email, password: code });
-    setLoading(false);
-    if (error) {
-      setCode("");
-      setError(/invalid/i.test(error.message) ? "Code incorrect." : "Connexion impossible. Réessayez.");
+    try {
+      const sb = supabaseBrowser();
+      const { data, error } = await sb.functions.invoke("tandem-login", { body: { who: who.key } });
+      if (error || !data?.access_token) throw error ?? new Error(data?.error ?? "login_failed");
+      const r = await sb.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
+      if (r.error) throw r.error;
+      try {
+        localStorage.setItem("tandem.lastWhoLogin", who.key);
+      } catch {}
+    } catch {
+      setLoading(false);
+      setError("Connexion impossible. Vérifiez votre réseau et réessayez.");
       return;
     }
     router.replace(next);
     router.refresh();
   }
-
-  const press = (k: string) => {
-    setError(null);
-    if (k === "del") setCode((c) => c.slice(0, -1));
-    else if (code.length < 6) setCode((c) => c + k);
-  };
 
   return (
     <div className="bg-grad-page min-h-dvh">
@@ -75,7 +70,6 @@ function Login() {
               key={p.key}
               onClick={() => {
                 setWho(p);
-                setCode("");
                 setError(null);
               }}
               className={cx(
@@ -94,46 +88,19 @@ function Login() {
           ))}
         </div>
 
-        {who && !IS_DEMO && (
-          <div className="animate-rise mt-6">
-            <div className="flex items-center justify-center gap-2 text-sm text-muted">
-              <Lock size={14} /> Code de {who.name}
-            </div>
-            <div className="mt-3 flex justify-center gap-2.5">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <span key={i} className={cx("h-3.5 w-3.5 rounded-full transition-colors", i < code.length ? "bg-ink" : "bg-track")} />
-              ))}
-            </div>
-            {error && <p className="mt-2 text-center text-sm font-medium text-over">{error}</p>}
-            <div className="mx-auto mt-4 grid max-w-72 grid-cols-3 gap-2">
-              {["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "del"].map((k, i) =>
-                k ? (
-                  <button
-                    key={i}
-                    onClick={() => press(k)}
-                    aria-label={k === "del" ? "Effacer" : k}
-                    className="press flex h-14 items-center justify-center rounded-2xl bg-surface text-2xl font-medium text-ink"
-                  >
-                    {k === "del" ? <Delete size={22} /> : k}
-                  </button>
-                ) : (
-                  <span key={i} />
-                ),
-              )}
-            </div>
-          </div>
-        )}
-        {error && IS_DEMO && <p className="mt-3 text-center text-sm text-over">{error}</p>}
+        {error && <p className="mt-4 text-center text-sm font-medium text-over">{error}</p>}
 
         <div className="mt-auto pt-6">
           <button
             onClick={signIn}
-            disabled={!who || loading || (!IS_DEMO && code.length !== 6)}
+            disabled={!who || loading}
             className="press bg-grad-cta h-14 w-full rounded-2xl text-[17px] font-semibold text-aubergine disabled:opacity-35"
           >
             {loading ? "Connexion…" : who ? `Se connecter en tant que ${who.name}` : "Se connecter"}
           </button>
-          {IS_DEMO && <p className="mt-3 text-center text-xs text-muted">Mode démo : données fictives, rien n&apos;est enregistré.</p>}
+          <p className="mt-3 text-center text-xs text-muted">
+            {IS_DEMO ? "Mode démo : données fictives, rien n'est enregistré." : "Ton choix est retenu sur cet appareil."}
+          </p>
         </div>
       </main>
     </div>
