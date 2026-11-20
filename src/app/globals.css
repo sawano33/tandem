@@ -78,7 +78,7 @@ body {
   padding-bottom: max(env(safe-area-inset-bottom), 12px);
 }
 .pb-tabbar {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 112px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 120px);
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -174,4 +174,92 @@ body {
   font-family: var(--font-sans);
   font-feature-settings: "tnum" 1, "cv11" 1;
   letter-spacing: -0.03em;
+}
+
+
+/* =====================================================================
+   Barre de navigation flottante
+   ===================================================================== */
+.tabbar {
+  background: linear-gradient(180deg, rgba(55, 44, 99, 0.82) 0%, rgba(38, 30, 72, 0.9) 100%);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  box-shadow: 0 18px 40px -18px rgba(10, 6, 24, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+.tab-indicator {
+  background: linear-gradient(180deg, rgba(197, 182, 242, 0.18), rgba(197, 182, 242, 0.08));
+  border: 1px solid rgba(197, 182, 242, 0.16);
+  transition: transform 450ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.add-btn {
+  box-shadow: 0 10px 22px -10px rgba(10, 6, 24, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  outline: 5px solid var(--bg);
+  transition: transform 200ms ease, border-radius 300ms ease;
+}
+.add-btn:active { transform: scale(0.92) rotate(-6deg); }
+@keyframes tab-pop {
+  0% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(-3px) scale(1.12); }
+  100% { transform: translateY(0) scale(1); }
+}
+.tab-pop { animation: tab-pop 420ms cubic-bezier(0.32, 0.72, 0, 1); }
+
+/* =====================================================================
+   Animations CSS
+   ===================================================================== */
+/* Entrée des écrans : chaque bloc monte en cascade */
+@keyframes enter {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+.stagger > * { animation: enter 560ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 50ms; }
+.stagger > *:nth-child(3) { animation-delay: 100ms; }
+.stagger > *:nth-child(4) { animation-delay: 150ms; }
+.stagger > *:nth-child(5) { animation-delay: 200ms; }
+.stagger > *:nth-child(6) { animation-delay: 250ms; }
+.stagger > *:nth-child(7) { animation-delay: 300ms; }
+.stagger > *:nth-child(8) { animation-delay: 350ms; }
+.stagger > *:nth-child(n + 9) { animation-delay: 400ms; }
+
+/* Camembert : rotation + ouverture, puis chaque part apparaît */
+@keyframes pie-in {
+  from { transform: rotate(-120deg) scale(0.6); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.pie-in { animation: pie-in 900ms cubic-bezier(0.22, 1, 0.36, 1) both; transform-origin: center; }
+@keyframes slice-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.slice-in { animation: slice-in 500ms ease-out backwards; }
+
+/* Barres de progression qui se remplissent */
+@keyframes grow-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.grow-x { transform-origin: left center; animation: grow-x 900ms cubic-bezier(0.22, 1, 0.36, 1) 150ms both; }
+
+/* Montants : apparition nette (flou → net) */
+@keyframes num-in {
+  from { opacity: 0; filter: blur(6px); transform: translateY(6px); }
+  to { opacity: 1; filter: blur(0); transform: none; }
+}
+.num-in { animation: num-in 650ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both; }
+
+/* Pastille de notification qui respire */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.35); }
+}
+.breathe { animation: breathe 2.4s ease-in-out infinite; }
+
+/* Pression sur les cartes et lignes */
+.press { transition: transform 160ms cubic-bezier(0.32, 0.72, 0, 1), opacity 160ms ease, background-color 200ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger > *, .pie-in, .slice-in, .grow-x, .num-in, .breathe, .tab-pop { animation: none !important; }
+  .tab-indicator { transition: none; }
 }

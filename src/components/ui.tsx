@@ -11,7 +11,7 @@ export const cx = clsx;
 
 // ---------------------------------------------------------------- Mise en page
 export function Page({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className="bg-grad-page min-h-dvh"><main className={cx("mx-auto w-full max-w-md px-5 pt-safe pb-tabbar", className)}>{children}</main></div>;
+  return <div className="bg-grad-page min-h-dvh"><main className={cx("stagger mx-auto w-full max-w-md px-5 pt-safe pb-tabbar", className)}>{children}</main></div>;
 }
 
 export function PageHeader({
@@ -171,7 +171,7 @@ export function Progress({ ratio, color, className }: { ratio: number; color?: s
   return (
     <div className={cx("h-2 w-full overflow-hidden rounded-full bg-track", className)}>
       <div
-        className={cx("h-full rounded-full transition-[width] duration-700 ease-out", level || (!color && "bg-lavande"))}
+        className={cx("grow-x h-full rounded-full transition-[width] duration-700 ease-out", level || (!color && "bg-lavande"))}
         style={{ width: `${Math.min(100, Math.max(0, ratio * 100))}%`, background: level ? undefined : color }}
       />
     </div>

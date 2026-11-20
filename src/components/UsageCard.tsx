@@ -27,7 +27,7 @@ export function UsageCard({ usage, income, estimated, title = "Où va l'argent" 
       {/* Vue d'ensemble : dépensé / épargné / à venir / reste */}
       <div className="mt-4 flex h-2.5 w-full gap-[3px] overflow-hidden rounded-full">
         {groups.map((g) => (
-          <div key={g.id} className="h-full first:rounded-l-full last:rounded-r-full" style={{ width: `${g.share * 100}%`, background: g.color }} />
+          <div key={g.id} className="grow-x h-full first:rounded-l-full last:rounded-r-full" style={{ width: `${g.share * 100}%`, background: g.color }} />
         ))}
       </div>
       <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
@@ -52,7 +52,7 @@ export function UsageCard({ usage, income, estimated, title = "Où va l'argent" 
       <div className="mt-3 h-11 text-center">
         {sel ? (
           <>
-            <p className="font-num tabular text-[20px] font-semibold leading-tight text-ink">{money(sel.cents)}</p>
+            <p key={sel.id} className="num-in font-num tabular text-[20px] font-semibold leading-tight text-ink">{money(sel.cents)}</p>
             <p className="truncate text-[12.5px] text-muted">
               {sel.name} · {Math.round(sel.share * 100)} % des revenus{sel.detail ? ` · ${sel.detail}` : ""}
             </p>

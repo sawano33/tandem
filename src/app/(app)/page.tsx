@@ -68,7 +68,7 @@ export default function HomePage() {
         <h1 className="font-display min-w-0 flex-1 truncate text-[21px] font-semibold text-ink">{title}</h1>
         <Link href="/budgets" aria-label="Alertes" className="press relative flex h-10 w-10 items-center justify-center rounded-full bg-surface text-ink">
           <Bell size={20} />
-          {(alerts.length > 0 || inRed.length > 0) && <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-peche ring-2 ring-surface" />}
+          {(alerts.length > 0 || inRed.length > 0) && <span className="breathe absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-peche ring-2 ring-surface" />}
         </Link>
         <Link href="/profil" aria-label="Profil">
           <Avatar profile={d.me} size={40} />
@@ -94,12 +94,12 @@ export default function HomePage() {
                 </span>
               )}
             </div>
-            <p className={cx("font-num tabular mt-1 text-[44px] font-semibold leading-tight", s.resteAVivre < 0 ? "text-over" : "text-ink")}>
+            <p key={`${month.getTime()}-${scope}`} className={cx("num-in font-num tabular mt-1 text-[44px] font-semibold leading-tight", s.resteAVivre < 0 ? "text-over" : "text-ink")}>
               {money(s.resteAVivre)}
             </p>
             <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-track">
               <div
-                className="h-full rounded-full transition-[width] duration-700"
+                className="grow-x h-full rounded-full transition-[width] duration-700"
                 style={{ width: `${Math.min(100, ratio * 100)}%`, background: ratio > 1 ? "#FF7D8C" : "linear-gradient(90deg,#FFAE97,#C5B6F2)" }}
               />
             </div>
@@ -127,7 +127,7 @@ export default function HomePage() {
 
       {/* Camembert d'utilisation */}
       <div className="mt-3">
-        <UsageCard usage={usage} income={s.income} estimated={s.estimated} />
+        <UsageCard key={`${month.getTime()}-${scope}`} usage={usage} income={s.income} estimated={s.estimated} />
       </div>
 
       {/* Alertes */}

@@ -127,10 +127,10 @@ export function Pie({
   let angle = -Math.PI / 2;
   const pt = (a: number, rad: number) => [r + rad * Math.cos(a), r + rad * Math.sin(a)];
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0 overflow-visible" role="img" aria-label="Camembert d'utilisation du budget">
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="pie-in shrink-0 overflow-visible" role="img" aria-label="Camembert d'utilisation du budget">
       {total === 0 && <circle cx={r} cy={r} r={r - 2} fill="var(--track)" />}
       {total > 0 &&
-        slices.map((s) => {
+        slices.map((s, idx) => {
           const sweep = (s.value / total) * Math.PI * 2;
           const a0 = angle;
           const a1 = angle + sweep;
@@ -155,7 +155,8 @@ export function Pie({
               key={s.id}
               transform={`translate(${dx} ${dy})`}
               onClick={() => onSelect?.(isSel ? null : s.id)}
-              style={{ cursor: "pointer", transition: "transform 300ms cubic-bezier(0.32,0.72,0,1), opacity 200ms", opacity: selected && !isSel ? 0.35 : 1 }}
+              className="slice-in"
+              style={{ cursor: "pointer", transition: "transform 300ms cubic-bezier(0.32,0.72,0,1), opacity 200ms", opacity: selected && !isSel ? 0.35 : 1, animationDelay: `${250 + idx * 70}ms` }}
             >
               <path d={d} fill={s.color} stroke="var(--surface)" strokeWidth={3} strokeLinejoin="round" />
               {share >= 0.08 && (
