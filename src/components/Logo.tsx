@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { logoFull, markBottom, markTop, wordWhite, WORD_H, WORD_LETTERS } from "@/lib/brand-assets";
 
-const RATIO = 702 / 679;
+const RATIO = 508 / 433;
 
 /** Monogramme TANDEM : deux moitiés (pêche et lilas) qui s'emboîtent. */
 export function LogoMark({ size = 30, className = "", animated = false }: { size?: number; className?: string; animated?: boolean }) {

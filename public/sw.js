@@ -1,5 +1,5 @@
 /* TANDEM — service worker : app installable, coquille hors ligne, notifications. */
-const CACHE = "tandem-v1";
+const CACHE = "tandem-v2";
 const SHELL = ["/offline.html", "/icons/icon-192.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {

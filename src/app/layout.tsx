@@ -13,8 +13,8 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "TANDEM", statusBarStyle: "black-translucent" },
   icons: {
     icon: [
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
       { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon.svg", type: "image/svg+xml" },
     ],
     apple: "/icons/apple-touch-icon.png",
   },
