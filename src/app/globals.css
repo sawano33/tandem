@@ -139,16 +139,19 @@ body {
   }
 }
 
-/* ---------- Logo animé en boucle : la boucle pêche se dessine de bas en haut, puis repart ---------- */
-@keyframes logo-swoosh {
-  0% { clip-path: inset(100% 0 0 0); }
-  38% { clip-path: inset(0 0 0 0); }
-  72% { clip-path: inset(0 0 0 0); }
-  100% { clip-path: inset(0 0 100% 0); }
+/* ---------- Logo animé en boucle : les deux moitiés s'écartent le long de la vague puis se rejoignent ---------- */
+@keyframes logo-top {
+  0%, 30%, 100% { transform: translate(0, 0) rotate(0deg); }
+  55%, 70% { transform: translate(-7%, -7%) rotate(-6deg); }
 }
-.logo-swoosh { animation: logo-swoosh 3.4s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+@keyframes logo-bottom {
+  0%, 30%, 100% { transform: translate(0, 0) rotate(0deg); }
+  55%, 70% { transform: translate(7%, 7%) rotate(-6deg); }
+}
+.logo-top { animation: logo-top 3.6s cubic-bezier(0.65, 0, 0.35, 1) infinite; transform-origin: 50% 50%; }
+.logo-bottom { animation: logo-bottom 3.6s cubic-bezier(0.65, 0, 0.35, 1) infinite; transform-origin: 50% 50%; }
 @media (prefers-reduced-motion: reduce) {
-  .logo-swoosh { animation: none; }
+  .logo-top, .logo-bottom { animation: none; }
 }
 
 /* ---------- Dégradés TANDEM ---------- */

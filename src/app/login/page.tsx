@@ -61,7 +61,7 @@ function Login() {
       <main className="pt-safe pb-safe mx-auto flex min-h-dvh max-w-md flex-col px-6">
         {/* Marque */}
         <div className="stagger flex flex-1 flex-col items-center justify-center pt-10 text-center">
-          <Wordmark height={44} />
+          <Wordmark height={56} />
           <p className="font-display mt-4 text-[21px] font-medium italic text-ink/85">Deux vies. Un équilibre.</p>
 
           {/* Choix du profil */}
