@@ -47,8 +47,10 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
-  overscroll-behavior-y: none;
-  overflow-x: hidden;
+}
+/* Pas de défilement horizontal, sans bloquer le défilement vertical (clip ne crée pas de conteneur de défilement) */
+body {
+  overflow-x: clip;
 }
 
 /* Les champs à moins de 16px font zoomer Safari iOS (dans la couche base pour laisser les utilitaires l'emporter) */
