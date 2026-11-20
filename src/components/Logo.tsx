@@ -61,7 +61,7 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
   const [leaving, setLeaving] = useState(false);
   useEffect(() => {
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    const t = setTimeout(() => setPlayed(true), reduce ? 150 : 1900);
+    const t = setTimeout(() => setPlayed(true), reduce ? 150 : 2400);
     return () => clearTimeout(t);
   }, []);
   useEffect(() => {
@@ -71,7 +71,7 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
     return () => clearTimeout(t);
   }, [played, ready, onDone]);
 
-  const H = 30;
+  const H = 36;
   return (
     <div className={`splash ${leaving ? "leaving" : ""}`} aria-hidden>
       <div className="flex flex-col items-center">
