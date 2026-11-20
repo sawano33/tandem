@@ -5,10 +5,11 @@ Next.js 15 · TypeScript · Tailwind CSS 4 · Supabase (auth, base, temps réel,
 
 ## Ce que fait l'app
 
-- **Accueil** : reste à vivre, solde disponible, épargne, revenus, dépenses, alertes budgets, prochaines charges, courbe du mois, dernières opérations, objectifs. Sélecteur Guillaume / Emma / Ensemble et navigation par mois.
+- **Accueil** (thème sombre partout) : reste à vivre, comptes courants, épargne investie, revenus, dépenses, alertes (compte qui finira dans le rouge, budgets), camembert du mois, qui a dépensé quoi, fin de mois prévue par compte, prochaines charges, épargne. Sélecteur Guillaume / Emma / Ensemble et navigation par mois.
 - **Ajout rapide (+)** : dépense, revenu ou virement interne en quelques secondes. Les virements ne comptent jamais comme dépenses. Si une dépense ressemble à une charge fixe prévue, l'app propose de la rattacher (pas de doublon).
 - **Dépenses** : total du mois, comparaison avec le mois précédent, répartition par catégorie, recherche, filtres, historique jour par jour. Bouton **Analyse** : statistiques par mois, trimestre ou année.
-- **Budgets** : plafond par catégorie, reconduction automatique, alertes à 80 % et au-delà de 100 %. Onglet **Épargne & projets** : objectifs communs ou personnels, versements et retraits.
+- **Budgets** : plafond par catégorie, reconduction automatique, alertes à 80 % et au-delà de 100 %. Onglet **Épargne** : comptes d'investissement (Trade Republic de Guillaume et d'Emma) en montant global ou ligne par ligne (ETF, actions, plus-value), puis projets (bébé, vacances…) avec versements modifiables.
+- **Répartition à deux** (Profil) : 50/50, prorata, prorata après crédits, « même effort » (chacun garde le même % de son salaire) ou personnalisé, avec la part de chacun sur le joint et le reste pour soi.
 - **Profil** : prénom, couleur, avatar, comptes bancaires (privés ou partagés), catégories, charges fixes, partenaire, notifications, thème clair/sombre/auto, export CSV, déconnexion.
 
 ## 1. Supabase
@@ -18,6 +19,7 @@ Next.js 15 · TypeScript · Tailwind CSS 4 · Supabase (auth, base, temps réel,
    - `20261119000001_tandem_schema.sql` — tables, RLS, fonctions, temps réel
    - `20261119000002_avatars_storage.sql` — bucket des avatars
    - `20261119000003_notifications.sql` — préférences de notifications
+   - `20261119000004_invest_split.sql` — comptes d'investissement, lignes ETF, réglages de répartition
    (ou `supabase db push` avec la CLI Supabase).
 3. **Authentication → Users → Add user** : créez deux utilisateurs
    - l'e-mail de Guillaume avec un **code à 6 chiffres** comme mot de passe
@@ -48,7 +50,7 @@ npm run dev
 
 Ouvrez http://localhost:3000 : écran **G / E**, puis code à 6 chiffres.
 
-- **Premier lancement (Guillaume)** : écran « Créer le foyer » → crée le foyer, les 12 catégories par défaut, un compte joint et un compte espèces.
+- **Premier lancement (Guillaume)** : écran « Créer le foyer » → crée le foyer, les 12 catégories par défaut (animaux compris dans Courses, catégorie Crédits), un compte joint et un compte espèces. Ajoutez ensuite vos comptes Trade Republic dans Budgets → Épargne.
 - **Emma** : Guillaume génère un code dans **Profil → Partenaire**, Emma se connecte et choisit « Rejoindre ».
 
 Ensuite, tout ce que l'un ajoute apparaît immédiatement chez l'autre (Supabase Realtime).

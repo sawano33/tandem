@@ -27,7 +27,22 @@ export const DEFAULT_NOTIF: NotificationPrefs = {
   partner: true, partner_min_cents: 0, weekly: true, goals: true, quiet: true,
 };
 
-export type Household = { id: UUID; name: string; currency: string; created_by: UUID | null };
+export type SplitMode = "equal" | "prorata" | "prorata_after_credits" | "equal_rate" | "custom";
+export type SplitSettings = {
+  mode: SplitMode;
+  /** revenus nets mensuels par membre, en centimes */
+  incomes?: Record<UUID, number>;
+  /** part personnalisée en % par membre */
+  custom?: Record<UUID, number>;
+};
+
+export type Household = {
+  id: UUID;
+  name: string;
+  currency: string;
+  created_by: UUID | null;
+  split_settings?: SplitSettings | null;
+};
 
 export type Member = { household_id: UUID; user_id: UUID; role: "owner" | "member"; joined_at: string };
 
@@ -45,8 +60,24 @@ export type Account = {
   is_private: boolean;
   archived: boolean;
   sort: number;
+  /** comptes d'investissement : valeur globale saisie à la main */
+  manual_value_cents?: number | null;
+  value_updated_at?: string | null;
   /** calculé via la vue account_balances */
   balance_cents: number;
+};
+
+export type Holding = {
+  id: UUID;
+  household_id: UUID;
+  account_id: UUID;
+  name: string;
+  ticker: string | null;
+  quantity: number | null;
+  value_cents: number;
+  invested_cents: number | null;
+  sort: number;
+  updated_at: string;
 };
 
 export type Category = {

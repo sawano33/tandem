@@ -363,15 +363,15 @@ create or replace function public.seed_household_defaults(hid uuid)
 returns void language plpgsql security definer set search_path = '' as $$
 begin
   insert into public.categories (household_id, name, icon, color, kind, is_system, sort) values
-    (hid, 'Courses',      'shopping-cart', '#7FB89A', 'expense', true, 1),
+    (hid, 'Courses',      'shopping-cart', '#7FB89A', 'expense', true, 1),  -- animaux compris
     (hid, 'Restaurants',  'utensils',      '#FFAE97', 'expense', true, 2),
     (hid, 'Logement',     'house',         '#8B7FD1', 'expense', true, 3),
-    (hid, 'Transport',    'car',           '#E8B04B', 'expense', true, 4),
-    (hid, 'Animaux',      'paw-print',     '#D98B5F', 'expense', true, 5),
+    (hid, 'Crédits',      'credit-card',   '#5FA8CF', 'expense', true, 4),
+    (hid, 'Transport',    'car',           '#E8B04B', 'expense', true, 5),
     (hid, 'Bébé',         'baby',          '#EE97B9', 'expense', true, 6),
     (hid, 'Santé',        'heart-pulse',   '#E06C75', 'expense', true, 7),
     (hid, 'Shopping',     'shopping-bag',  '#B49CF0', 'expense', true, 8),
-    (hid, 'Loisirs',      'party-popper',  '#5FA8CF', 'expense', true, 9),
+    (hid, 'Loisirs',      'party-popper',  '#6FC2B4', 'expense', true, 9),
     (hid, 'Abonnements',  'repeat',        '#9C8FE0', 'expense', true, 10),
     (hid, 'Impôts',       'landmark',      '#7D7A8C', 'expense', true, 11),
     (hid, 'Autres',       'ellipsis',      '#ABA4BF', 'expense', true, 12),

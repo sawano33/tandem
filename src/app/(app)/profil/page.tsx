@@ -1,17 +1,11 @@
 "use client";
 
-import { Bell, ChevronRight, Download, LogOut, Repeat, Shapes, UserRound, Users, Wallet } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { Bell, ChevronRight, Download, LogOut, Repeat, Scale, Shapes, UserRound, Users, Wallet } from "lucide-react";
+import type { ReactNode } from "react";
 import { useData } from "@/lib/store";
 import { toCSV } from "@/lib/csv";
-import { Avatar, Card, ListRow, Page, PageHeader, Segmented } from "@/components/ui";
+import { Avatar, Card, ListRow, Page, PageHeader } from "@/components/ui";
 
-type Theme = "system" | "light" | "dark";
-
-function applyTheme(t: Theme) {
-  const dark = t === "dark" || (t === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
-  document.documentElement.classList.toggle("dark", dark);
-}
 
 const Bubble = ({ children, bg }: { children: ReactNode; bg: string }) => (
   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white" style={{ background: bg }}>
@@ -21,21 +15,6 @@ const Bubble = ({ children, bg }: { children: ReactNode; bg: string }) => (
 
 export default function ProfilPage() {
   const d = useData();
-  const [theme, setTheme] = useState<Theme>("system");
-
-  useEffect(() => {
-    try {
-      setTheme((localStorage.getItem("tandem.theme") as Theme) || "system");
-    } catch {}
-  }, []);
-
-  const changeTheme = (t: Theme) => {
-    setTheme(t);
-    try {
-      localStorage.setItem("tandem.theme", t);
-    } catch {}
-    applyTheme(t);
-  };
 
   function exportCSV() {
     const csv = toCSV(d.transactions, d);
@@ -70,22 +49,10 @@ export default function ProfilPage() {
         <ListRow href="/profil/categories" left={<Bubble bg="#7FB89A"><Shapes size={18} /></Bubble>} title="Catégories" right={chev} />
         <ListRow href="/profil/charges" left={<Bubble bg="#FF9A80"><Repeat size={18} /></Bubble>} title="Charges fixes" subtitle={`${d.recurring_expenses.filter((r) => r.active).length} prélèvements`} right={chev} />
         <ListRow href="/profil/partenaire" left={<Bubble bg="#F5A3C7"><Users size={18} /></Bubble>} title="Partenaire" subtitle={d.partner ? d.partner.first_name : "Inviter"} right={chev} />
+        <ListRow href="/profil/repartition" left={<Bubble bg="#6FC2B4"><Scale size={18} /></Bubble>} title="Répartition à deux" subtitle="Qui verse combien sur le joint" right={chev} />
         <ListRow href="/profil/notifications" left={<Bubble bg="#E8B04B"><Bell size={18} /></Bubble>} title="Notifications" right={chev} />
       </Card>
 
-      <Card className="mt-4">
-        <p className="mb-2 text-[13px] font-medium text-muted">Apparence</p>
-        <Segmented
-          value={theme}
-          onChange={changeTheme}
-          className="bg-surface-2"
-          options={[
-            { value: "light", label: "Clair" },
-            { value: "dark", label: "Sombre" },
-            { value: "system", label: "Auto" },
-          ]}
-        />
-      </Card>
 
       <Card className="mt-4 py-1.5">
         <ListRow onClick={exportCSV} left={<Bubble bg="#5FA8CF"><Download size={18} /></Bubble>} title="Exporter en CSV" subtitle="Tout l'historique des opérations" />

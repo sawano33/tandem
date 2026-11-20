@@ -9,6 +9,7 @@ import { centsToInput, dayShort, money, monthISO, monthLabel, parseAmount, parse
 import { budgetLines, goalInScope, goalSaved, type BudgetLine } from "@/lib/finance";
 import { Icon, IconBubble, PALETTE } from "@/lib/icons";
 import { IconColorPicker } from "@/components/IconColorPicker";
+import { InvestSection } from "@/components/InvestSection";
 import type { SavingsGoal } from "@/lib/types";
 import { MonthSwitcher, ScopeSwitcher } from "@/components/Switchers";
 import { Button, Card, Chip, EmptyState, Field, Page, PageHeader, Progress, Segmented, Sheet, Toggle, cx, inputClass } from "@/components/ui";
@@ -42,7 +43,7 @@ function BudgetsInner() {
         onChange={(v) => router.replace(v === "epargne" ? "/budgets?vue=epargne" : "/budgets")}
         options={[
           { value: "budgets", label: "Budgets" },
-          { value: "epargne", label: "Épargne & projets" },
+          { value: "epargne", label: "Épargne" },
         ]}
       />
       {view === "budgets" ? <BudgetsView adding={adding} setAdding={setAdding} /> : <SavingsView adding={adding} setAdding={setAdding} />}
@@ -205,22 +206,21 @@ function SavingsView({ adding, setAdding }: { adding: boolean; setAdding: (v: bo
   return (
     <>
       <ScopeSwitcher className="mt-3" />
+      <InvestSection />
+      <div className="mb-2.5 mt-7 flex items-baseline justify-between px-1">
+        <h2 className="font-display text-xl font-semibold text-ink">Projets</h2>
+        {goals.length > 0 && <span className="tabular text-sm text-muted">{money(saved)} / {money(target)}</span>}
+      </div>
       {goals.length === 0 ? (
         <EmptyState
           icon={<PiggyBank size={24} />}
           title="Aucun projet"
-          text="Tesla, arrivée du bébé, vacances, achat immobilier… Créez votre premier objectif."
+          text="Arrivée du bébé, vacances, Tesla, achat immobilier… Créez votre premier objectif."
           action={<Button onClick={() => setAdding(true)}>Créer un objectif</Button>}
         />
       ) : (
         <>
-          <Card className="mt-4">
-            <p className="text-[13px] text-muted">Total épargné</p>
-            <p className="font-display tabular text-[28px] font-semibold text-ink">{money(saved)}</p>
-            <Progress ratio={target ? saved / target : 0} className="mt-2" />
-            <p className="mt-1.5 text-[12px] text-muted">{pct(saved, target)} % de {money(target)}</p>
-          </Card>
-          <div className="mt-4 space-y-3">
+          <div className="space-y-3">
             {goals.map((g) => {
               const sv = goalSaved(g, d.savings_contributions);
               return (
@@ -271,6 +271,7 @@ function GoalDetail({ goal, onClose, onEdit }: { goal: SavingsGoal | null; onClo
   const d = useData();
   const [amount, setAmount] = useState("");
   const [withdraw, setWithdraw] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const g = goal ? d.savings_goals.find((x) => x.id === goal.id) ?? goal : null;
   const list = useMemo(
     () => (g ? d.savings_contributions.filter((c) => c.goal_id === g.id).sort((a, b) => b.contributed_on.localeCompare(a.contributed_on)) : []),
@@ -291,6 +292,14 @@ function GoalDetail({ goal, onClose, onEdit }: { goal: SavingsGoal | null; onClo
 
   async function add() {
     if (!cents) return;
+    if (editingId) {
+      if (await d.update("savings_contributions", editingId, { amount_cents: withdraw ? -cents : cents })) {
+        setEditingId(null);
+        setAmount("");
+        d.toast("Versement modifié");
+      }
+      return;
+    }
     const ok = await d.insert("savings_contributions", {
       goal_id: g!.id,
       amount_cents: withdraw ? -cents : cents,
@@ -335,19 +344,26 @@ function GoalDetail({ goal, onClose, onEdit }: { goal: SavingsGoal | null; onClo
         <div className="mt-3 flex gap-2">
           <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" placeholder="Montant" className={inputClass} />
           <button onClick={add} disabled={!cents} className="press h-12 shrink-0 rounded-2xl bg-strong px-5 font-semibold text-on-strong disabled:opacity-40">
-            OK
+            {editingId ? "Modifier" : "OK"}
           </button>
         </div>
       </div>
 
-      <p className="mb-1 mt-5 px-1 text-[13px] font-medium text-muted">Historique</p>
+      <p className="mb-1 mt-5 px-1 text-[13px] font-medium text-muted">Historique · touchez un versement pour le modifier</p>
       <Card className="py-1">
         {list.length === 0 && <p className="py-3 text-sm text-muted">Aucun versement pour l&apos;instant.</p>}
         {list.map((c) => (
-          <div key={c.id} className="flex items-center gap-3 py-2.5">
-            <span className="flex-1 text-[15px] text-ink">
+          <div key={c.id} className={cx("flex items-center gap-3 py-2.5", editingId === c.id && "rounded-xl bg-lavande/15 px-2")}>
+            <button
+              onClick={() => {
+                setEditingId(c.id);
+                setWithdraw(c.amount_cents < 0);
+                setAmount(centsToInput(Math.abs(c.amount_cents)));
+              }}
+              className="flex-1 text-left text-[15px] text-ink"
+            >
               {dayShort(c.contributed_on)} · {d.nameOf(c.user_id)}
-            </span>
+            </button>
             <span className={cx("tabular font-semibold", c.amount_cents > 0 ? "text-ok" : "text-over")}>
               {c.amount_cents > 0 ? "+" : "−"}
               {money(Math.abs(c.amount_cents))}

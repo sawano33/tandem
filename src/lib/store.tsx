@@ -10,7 +10,7 @@ import { DEFAULT_NOTIF } from "./types";
 import { IS_DEMO, buildDemo, computeBalances, getDemoUser, setDemoUser } from "./demo";
 import type {
   Account, Budget, Category, Household, Member, Profile, RecurringExpense, SavingsContribution,
-  SavingsGoal, ScheduledTransaction, Scope, Transaction,
+  SavingsGoal, ScheduledTransaction, Scope, Transaction, Holding,
 } from "./types";
 
 type Tables = {
@@ -22,6 +22,7 @@ type Tables = {
   scheduled_transactions: ScheduledTransaction[];
   savings_goals: SavingsGoal[];
   savings_contributions: SavingsContribution[];
+  holdings: Holding[];
 };
 type TableName = keyof Tables | "account_balances";
 
@@ -86,11 +87,12 @@ const ORDER: Record<keyof Tables, string> = {
   scheduled_transactions: "due_on",
   savings_goals: "created_at",
   savings_contributions: "contributed_on",
+  holdings: "sort",
 };
 
 const EMPTY: Tables = {
   accounts: [], categories: [], transactions: [], budgets: [], recurring_expenses: [],
-  scheduled_transactions: [], savings_goals: [], savings_contributions: [],
+  scheduled_transactions: [], savings_goals: [], savings_contributions: [], holdings: [],
 };
 
 export function DataProvider({ children }: { children: ReactNode }) {
@@ -143,6 +145,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const map = new Map<string, number>((bal.data ?? []).map((b: { account_id: string; balance_cents: number }) => [b.account_id, Number(b.balance_cents)]));
     return acc.map((a) => ({
       ...a,
+      manual_value_cents: a.manual_value_cents == null ? null : Number(a.manual_value_cents),
       initial_balance_cents: Number(a.initial_balance_cents),
       balance_cents: map.get(a.id) ?? Number(a.initial_balance_cents),
     }));
@@ -163,7 +166,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           const next = { ...d };
           for (const [t, rows] of entries) {
             (next as Record<string, unknown>)[t] = (rows as Record<string, unknown>[]).map((r) =>
-              "amount_cents" in r ? { ...r, amount_cents: Number(r.amount_cents) } : "target_cents" in r ? { ...r, target_cents: Number(r.target_cents) } : r,
+              "amount_cents" in r ? { ...r, amount_cents: Number(r.amount_cents) } : "target_cents" in r ? { ...r, target_cents: Number(r.target_cents) } : "value_cents" in r ? { ...r, value_cents: Number(r.value_cents), quantity: r.quantity == null ? null : Number(r.quantity) } : r,
             );
           }
           return next;
@@ -273,6 +276,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     );
     channel.on("postgres_changes", { event: "*", schema: "public", table: "household_members", filter: `household_id=eq.${hid.current}` }, () => reloadProfiles());
     channel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles" }, () => reloadProfiles());
+    channel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "households", filter: `id=eq.${hid.current}` }, (p: { new: unknown }) =>
+      setHousehold(p.new as Household),
+    );
     channel.subscribe();
 
     // Rattrapage au retour au premier plan (iOS suspend les connexions en arrière-plan)
@@ -407,10 +413,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
     router.replace("/login");
   }, [supabase, router]);
 
-  const accountsWithBalance = useMemo(
-    () => (IS_DEMO ? computeBalances(data.accounts, data.transactions) : data.accounts),
-    [data.accounts, data.transactions],
-  );
+  // Comptes d'investissement : valeur = somme des lignes, sinon valeur globale saisie, sinon solde calculé
+  const accountsWithBalance = useMemo(() => {
+    const base = IS_DEMO ? computeBalances(data.accounts, data.transactions) : data.accounts;
+    return base.map((a) => {
+      if (a.type !== "epargne") return a;
+      const lines = data.holdings.filter((h) => h.account_id === a.id);
+      if (lines.length) return { ...a, balance_cents: lines.reduce((s, h) => s + h.value_cents, 0) };
+      if (a.manual_value_cents != null) return { ...a, balance_cents: a.manual_value_cents };
+      return a;
+    });
+  }, [data.accounts, data.transactions, data.holdings]);
 
   const profileMap = useMemo(() => new Map(profiles.map((p) => [p.id, p])), [profiles]);
   const me = user ? profileMap.get(user.id) : undefined;

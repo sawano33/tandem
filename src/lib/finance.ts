@@ -270,3 +270,87 @@ export const monthsRange = (end: Date, count: number) =>
   Array.from({ length: count }, (_, i) => addMonths(end, i - count + 1));
 
 export { pad };
+
+// ------------------------------------------------------------------ Prévision par compte
+/** Solde prévu en fin de mois : solde actuel moins les charges fixes encore à prélever sur ce compte. */
+export function accountProjection(account: Account, recurring: RecurringExpense[], scheduled: ScheduledTransaction[]) {
+  const pending = occurrencesForMonth(recurring, scheduled, new Date(), "all")
+    .filter((o) => o.status === "pending" && o.recurring.account_id === account.id)
+    .reduce((s, o) => s + o.amount_cents, 0);
+  return { pending, projected: account.balance_cents - pending };
+}
+
+// ------------------------------------------------------------------ Répartition à deux
+const PER_MONTH: Record<RecurringExpense["frequency"], number> = { weekly: 52 / 12, monthly: 1, quarterly: 1 / 3, yearly: 1 / 12 };
+export const monthlyEquivalent = (r: RecurringExpense) => (r.active ? Math.round(r.amount_cents * PER_MONTH[r.frequency]) : 0);
+
+export type SplitLine = {
+  user_id: string;
+  income: number;
+  credits: number;
+  personalFixed: number;
+  share: number;
+  contribution: number;
+  left: number;
+  leftRatio: number;
+};
+
+export function computeSplit(params: {
+  mode: "equal" | "prorata" | "prorata_after_credits" | "equal_rate" | "custom";
+  memberIds: string[];
+  incomes: Record<string, number>;
+  custom?: Record<string, number>;
+  recurring: RecurringExpense[];
+  transactions: Transaction[];
+  categories: Category[];
+}) {
+  const { mode, memberIds, incomes, custom, recurring, transactions, categories } = params;
+  const creditCat = categories.find((c) => c.name.toLowerCase().startsWith("crédit"))?.id;
+
+  // Base commune : charges fixes communes, ou moyenne des dépenses communes des 3 derniers mois si plus élevée
+  const commonFixed = recurring.filter((r) => r.assigned_to === null).reduce((s, r) => s + monthlyEquivalent(r), 0);
+  const start = addMonths(new Date(), -3);
+  const end = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const commonAvg = Math.round(
+    txBetween(transactions, start, end)
+      .filter((t) => t.kind === "expense" && t.assigned_to === null)
+      .reduce((s, t) => s + t.amount_cents, 0) / 3,
+  );
+  const base = Math.max(commonFixed, commonAvg);
+
+  const rows = memberIds.map((id) => {
+    const mine = recurring.filter((r) => r.assigned_to === id);
+    const credits = mine.filter((r) => r.category_id === creditCat).reduce((s, r) => s + monthlyEquivalent(r), 0);
+    const personalFixed = mine.reduce((s, r) => s + monthlyEquivalent(r), 0);
+    return { id, income: incomes[id] ?? 0, credits, personalFixed };
+  });
+
+  const weight = (r: (typeof rows)[number]) =>
+    mode === "equal" ? 1 : mode === "prorata" ? r.income : mode === "prorata_after_credits" ? Math.max(0, r.income - r.credits) : (custom?.[r.id] ?? 0);
+  const total = rows.reduce((s, r) => s + weight(r), 0) || 1;
+
+  // « Même effort » : chacun garde le même % de son salaire après dépenses communes et charges perso
+  const totalIncome = rows.reduce((s, r) => s + r.income, 0);
+  const keep = totalIncome ? (rows.reduce((s, r) => s + r.income - r.personalFixed, 0) - base) / totalIncome : 0;
+  const rateContrib = rows.map((r) => Math.max(0, r.income - r.personalFixed - keep * r.income));
+  const rateTotal = rateContrib.reduce((s, v) => s + v, 0) || 1;
+
+  const lines: SplitLine[] = rows.map((r, i) => {
+    const share = mode === "equal" ? 1 / rows.length : mode === "equal_rate" ? rateContrib[i] / rateTotal : weight(r) / total;
+    const contribution = Math.round(base * share);
+    const left = r.income - contribution - r.personalFixed;
+    return { user_id: r.id, income: r.income, credits: r.credits, personalFixed: r.personalFixed, share, contribution, left, leftRatio: r.income ? left / r.income : 0 };
+  });
+  return { base, commonFixed, commonAvg, lines };
+}
+
+/** Revenus moyens des 3 derniers mois (pré-remplissage si non saisis). */
+export function averageIncome(transactions: Transaction[], userId: string) {
+  const start = addMonths(new Date(), -3);
+  const end = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  return Math.round(
+    txBetween(transactions, start, end)
+      .filter((t) => t.kind === "income" && t.assigned_to === userId)
+      .reduce((s, t) => s + t.amount_cents, 0) / 3,
+  );
+}

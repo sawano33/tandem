@@ -14,11 +14,12 @@ import Categories from "@/app/(app)/profil/categories/page";
 import Charges from "@/app/(app)/profil/charges/page";
 import Partenaire from "@/app/(app)/profil/partenaire/page";
 import Notifications from "@/app/(app)/profil/notifications/page";
+import Repartition from "@/app/(app)/profil/repartition/page";
 
 const ROUTES: Record<string, () => React.ReactNode> = {
   "/": Home, "/depenses": Depenses, "/stats": Stats, "/budgets": Budgets, "/profil": Profil,
   "/profil/moi": Moi, "/profil/comptes": Comptes, "/profil/categories": Categories,
-  "/profil/charges": Charges, "/profil/partenaire": Partenaire, "/profil/notifications": Notifications,
+  "/profil/charges": Charges, "/profil/partenaire": Partenaire, "/profil/notifications": Notifications, "/profil/repartition": Repartition,
 };
 
 function App() {
@@ -34,9 +35,5 @@ function App() {
   );
 }
 
-try {
-  const t = localStorage.getItem("tandem.theme") || "system";
-  const dark = t === "dark" || (t === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
-  if (dark) document.documentElement.classList.add("dark");
-} catch {}
+document.documentElement.classList.add("dark");
 createRoot(document.getElementById("root")!).render(<App />);
