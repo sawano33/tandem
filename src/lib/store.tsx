@@ -7,7 +7,7 @@ import { supabaseBrowser } from "./supabase/client";
 import { money, monthStart } from "./format";
 import { allowed, notify } from "./notify";
 import { DEFAULT_NOTIF } from "./types";
-import { IS_DEMO, buildDemo, computeBalances, getDemoUser, setDemoUser } from "./demo";
+import { IS_DEMO, buildDemo, getDemoUser, setDemoUser } from "./demo";
 import type {
   Account, Budget, Category, Household, Member, Profile, RecurringExpense, SavingsContribution,
   SavingsGoal, ScheduledTransaction, Scope, Transaction, Holding,
@@ -138,25 +138,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
   );
 
   const fetchAccounts = useCallback(async () => {
-    const [acc, bal] = await Promise.all([
-      fetchTable("accounts"),
-      supabase.from("account_balances").select("account_id, balance_cents").eq("household_id", hid.current!),
-    ]);
-    const map = new Map<string, number>((bal.data ?? []).map((b: { account_id: string; balance_cents: number }) => [b.account_id, Number(b.balance_cents)]));
+    const acc = await fetchTable("accounts");
     return acc.map((a) => ({
       ...a,
       manual_value_cents: a.manual_value_cents == null ? null : Number(a.manual_value_cents),
       initial_balance_cents: Number(a.initial_balance_cents),
-      balance_cents: map.get(a.id) ?? Number(a.initial_balance_cents),
+      balance_cents: a.manual_value_cents == null ? Number(a.initial_balance_cents) : Number(a.manual_value_cents),
     }));
-  }, [fetchTable, supabase]);
+  }, [fetchTable]);
 
   const reload = useCallback(
     async (...tables: TableName[]) => {
       if (IS_DEMO || !hid.current) return;
       const list = new Set<TableName>(tables.length ? tables : (Object.keys(EMPTY) as TableName[]));
-      // tout mouvement d'argent change les soldes
-      if (list.has("transactions") || list.has("account_balances")) list.add("accounts");
+      if (list.has("account_balances")) list.add("accounts");
       list.delete("account_balances");
       try {
         const entries = await Promise.all(
@@ -415,15 +410,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // Comptes d'investissement : valeur = somme des lignes, sinon valeur globale saisie, sinon solde calculé
   const accountsWithBalance = useMemo(() => {
-    const base = IS_DEMO ? computeBalances(data.accounts, data.transactions) : data.accounts;
-    return base.map((a) => {
+    return data.accounts.map((a) => {
       if (a.type !== "epargne") return a;
       const lines = data.holdings.filter((h) => h.account_id === a.id);
       if (lines.length) return { ...a, balance_cents: lines.reduce((s, h) => s + h.value_cents, 0) };
       if (a.manual_value_cents != null) return { ...a, balance_cents: a.manual_value_cents };
       return a;
     });
-  }, [data.accounts, data.transactions, data.holdings]);
+  }, [data.accounts, data.holdings]);
 
   const profileMap = useMemo(() => new Map(profiles.map((p) => [p.id, p])), [profiles]);
   const me = user ? profileMap.get(user.id) : undefined;

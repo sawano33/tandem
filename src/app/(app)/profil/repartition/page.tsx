@@ -41,7 +41,7 @@ export default function RepartitionPage() {
 
   return (
     <Page>
-      <PageHeader title="Répartition" back="/profil" subtitle="Qui verse combien sur le compte joint" />
+      <PageHeader title="Répartition" back="/profil" subtitle="Qui paie combien des dépenses communes" />
 
       <p className="mb-2 px-1 text-[13px] font-medium text-muted">Salaires nets mensuels</p>
       <div className="grid grid-cols-2 gap-3">
@@ -109,12 +109,12 @@ export default function RepartitionPage() {
               </div>
               <div className="text-right">
                 <p className="font-display tabular text-xl font-semibold text-ink">{money(l.contribution)}</p>
-                <p className="text-[12px] text-muted">sur le joint</p>
+                <p className="text-[12px] text-muted">du commun</p>
               </div>
             </div>
             <div className="mt-3 space-y-1 border-t border-line pt-3 text-[13px]">
               <Row label="Salaire" value={money(l.income)} />
-              <Row label="Part du joint" value={`− ${money(l.contribution)}`} />
+              <Row label="Part du commun" value={`− ${money(l.contribution)}`} />
               <Row label="Charges perso (crédit, forfait…)" value={`− ${money(l.personalFixed)}`} />
               <div className="flex justify-between pt-1 text-[15px] font-semibold">
                 <span className="text-ink">Reste pour soi</span>

@@ -3,69 +3,64 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDownLeft, ArrowUpRight, Bell, CalendarClock, ChevronRight, Info, Landmark, TriangleAlert, Wallet } from "lucide-react";
+import { Bell, CalendarClock, ChevronRight, Info, TriangleAlert } from "lucide-react";
 import { useData } from "@/lib/store";
 import { daysInMonth, money, moneyShort, monthName, pct, relativeDue, today } from "@/lib/format";
 import {
-  accountProjection, budgetLines, byCategory, goalInScope, goalSaved, homeSummary, txOfMonth, upcomingCharges,
+  budgetLines, byCategory, computeSplit, goalInScope, goalSaved, homeSummary, monthIncome, occurrencesForMonth,
+  personForecast, txOfMonth, upcomingCharges, usageSlices,
 } from "@/lib/finance";
 import { IconBubble } from "@/lib/icons";
 import { LogoLoop } from "@/components/Logo";
 import { MonthSwitcher, ScopeSwitcher } from "@/components/Switchers";
-import { Donut, SplitBar } from "@/components/Charts";
+import { Pie, SplitBar } from "@/components/Charts";
 import { Avatar, Card, Page, Progress, SectionTitle, cx } from "@/components/ui";
 
 export default function HomePage() {
   const d = useData();
   const { scope, month } = d;
-  const [explain, setExplain] = useState(false);
-  const [catOpen, setCatOpen] = useState(false);
   const router = useRouter();
+  const [explain, setExplain] = useState(false);
+  const [slice, setSlice] = useState<string | null>(null);
 
+  const memberIds = d.members.map((m) => m.user_id);
+  const planned = d.household?.split_settings?.incomes;
   const s = useMemo(
-    () =>
-      homeSummary({
-        accounts: d.accounts, transactions: d.transactions, recurring: d.recurring_expenses,
-        scheduled: d.scheduled_transactions, month, scope,
-      }),
-    [d.accounts, d.transactions, d.recurring_expenses, d.scheduled_transactions, month, scope],
+    () => homeSummary({ transactions: d.transactions, recurring: d.recurring_expenses, scheduled: d.scheduled_transactions, month, scope, memberIds, planned }),
+    [d.transactions, d.recurring_expenses, d.scheduled_transactions, month, scope, memberIds.join(), planned], // eslint-disable-line react-hooks/exhaustive-deps
   );
-
   const monthTx = useMemo(() => txOfMonth(d.transactions, month), [d.transactions, month]);
-  const cats = byCategory(monthTx, scope, d.categories);
-  const alerts = budgetLines(d.budgets, d.categories, d.transactions, month).filter((l) => l.level !== "ok");
-  const charges = s.isCurrent
-    ? upcomingCharges(d.recurring_expenses, d.scheduled_transactions, scope)
-    : s.occ.filter((o) => o.status === "pending").slice(0, 4);
+  const usage = usageSlices({ monthTx, scope, categories: d.categories, income: s.income, saving: s.saving, pendingCharges: s.isPast ? 0 : s.pendingCharges });
+  const sel = usage.slices.find((x) => x.id === slice);
 
-  // Qui a dépensé quoi ce mois-ci
+  const alerts = budgetLines(d.budgets, d.categories, d.transactions, month).filter((l) => l.level !== "ok");
+  const charges = s.isCurrent ? upcomingCharges(d.recurring_expenses, d.scheduled_transactions, scope) : s.occ.filter((o) => o.status === "pending").slice(0, 4);
+
+  // Fin de mois par personne (avec la répartition choisie pour le commun)
+  const split = computeSplit({
+    mode: d.household?.split_settings?.mode ?? "equal_rate", memberIds,
+    incomes: Object.fromEntries(memberIds.map((id) => [id, monthIncome({ transactions: d.transactions, month, scope: id, memberIds, planned }).income])),
+    custom: d.household?.split_settings?.custom, recurring: d.recurring_expenses, transactions: d.transactions, categories: d.categories,
+  });
+  const allOcc = occurrencesForMonth(d.recurring_expenses, d.scheduled_transactions, month, "all");
+  const forecasts = split.lines
+    .filter((l) => scope === "all" || l.user_id === scope)
+    .map((l) => ({ l, profile: d.members.find((m) => m.user_id === l.user_id)?.profile, f: personForecast({ userId: l.user_id, share: l.share, income: l.income, monthTx, occ: s.isPast ? [] : allOcc }) }));
+  const inRed = forecasts.filter((x) => x.f.left < 0);
+
+  // Qui a dépensé quoi
   const people = [
     ...d.members.map((m) => ({
       id: m.user_id, name: m.profile?.first_name ?? "…", color: m.profile?.color ?? "#C5B6F2", profile: m.profile,
       cents: monthTx.filter((t) => t.kind === "expense" && t.assigned_to === m.user_id).reduce((a, t) => a + t.amount_cents, 0),
     })),
-    {
-      id: "common", name: "Commun", color: "#C5B6F2", profile: undefined,
-      cents: monthTx.filter((t) => t.kind === "expense" && t.assigned_to === null).reduce((a, t) => a + t.amount_cents, 0),
-    },
+    { id: "common", name: "Commun", color: "#C5B6F2", profile: undefined, cents: monthTx.filter((t) => t.kind === "expense" && t.assigned_to === null).reduce((a, t) => a + t.amount_cents, 0) },
   ];
-  const topCatFor = (who: string | null) => {
-    const list = byCategory(monthTx.filter((t) => t.assigned_to === who), "all", d.categories);
-    return list[0];
-  };
+  const topCatFor = (who: string | null) => byCategory(monthTx.filter((t) => t.assigned_to === who), "all", d.categories)[0];
 
-  // Prévision fin de mois des comptes courants
-  const projections = d.accounts
-    .filter((a) => !a.archived && a.type !== "epargne" && a.type !== "especes" && (scope === "all" || a.owner_id === scope))
-    .map((a) => ({ a, ...accountProjection(a, d.recurring_expenses, d.scheduled_transactions) }));
-  const negatives = projections.filter((p) => p.projected < 0);
-
-  // Épargne : comptes d'investissement (Trade Republic) + projets
   const invest = d.accounts.filter((a) => !a.archived && a.type === "epargne" && (scope === "all" || a.owner_id === scope));
   const goals = d.savings_goals.filter((g) => !g.archived && goalInScope(g, scope));
-
   const title = d.members.length > 1 ? d.members.map((m) => m.profile?.first_name).filter(Boolean).join(" & ") : d.household?.name;
-  const heroLabel = s.isCurrent ? "Reste à vivre" : s.isPast ? "Bilan du mois" : "Charges prévues";
 
   return (
     <Page>
@@ -74,7 +69,7 @@ export default function HomePage() {
         <h1 className="font-display min-w-0 flex-1 truncate text-[21px] font-semibold text-ink">{title}</h1>
         <Link href="/budgets" aria-label="Alertes" className="press relative flex h-10 w-10 items-center justify-center rounded-full bg-surface text-ink">
           <Bell size={20} />
-          {(alerts.length > 0 || negatives.length > 0) && <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-peche ring-2 ring-surface" />}
+          {(alerts.length > 0 || inRed.length > 0) && <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-peche ring-2 ring-surface" />}
         </Link>
         <Link href="/profil" aria-label="Profil">
           <Avatar profile={d.me} size={40} />
@@ -84,74 +79,82 @@ export default function HomePage() {
       <ScopeSwitcher className="mt-5" />
       <MonthSwitcher className="mt-4" />
 
-      {/* Reste à vivre */}
+      {/* Reste du mois */}
       <section className="animate-rise bg-grad-hero relative mt-4 overflow-hidden rounded-[26px] p-5 text-aubergine">
         <svg viewBox="0 0 200 140" className="pointer-events-none absolute -bottom-6 -right-6 h-40 w-56" aria-hidden>
           <path d="M40 160 C40 90 90 50 150 50 C185 50 210 70 210 70 L210 160Z" fill="#251D40" />
           <path d="M120 160 C120 95 150 30 205 25" fill="none" stroke="#C5B6F2" strokeWidth="26" strokeLinecap="round" />
         </svg>
         <button onClick={() => setExplain((v) => !v)} className="relative flex items-center gap-1.5 text-[17px] font-semibold">
-          <span className="font-display">{heroLabel}</span>
+          <span className="font-display">{s.isPast ? "Bilan du mois" : "Reste à vivre"}</span>
           <Info size={16} className="opacity-70" />
         </button>
         <p className="font-display tabular relative mt-1 text-[42px] font-semibold leading-none">{money(s.resteAVivre)}</p>
         <p className="relative mt-2 max-w-[60%] text-[13px] opacity-80">
-          {s.isCurrent ? `jusqu'au ${daysInMonth(month)} ${monthName(month)}` : s.isPast ? "revenus − dépenses" : `à prélever en ${monthName(month)}`}
+          {s.isPast ? "revenus − dépenses − épargne" : `jusqu'au ${daysInMonth(month)} ${monthName(month)}`}
         </p>
         {explain && (
-          <p className="animate-fade relative mt-3 max-w-[70%] rounded-2xl bg-white/50 p-3 text-[12.5px] leading-snug">
-            {s.isCurrent
-              ? `Solde des comptes courants (${money(s.available)}) moins les charges fixes encore à prélever ce mois-ci (${money(s.pendingCharges)}).`
-              : s.isPast
-                ? "Pour un mois passé : total des revenus moins total des dépenses."
-                : "Pour un mois à venir : somme des charges fixes prévues."}
+          <p className="animate-fade relative mt-3 max-w-[72%] rounded-2xl bg-white/55 p-3 text-[12.5px] leading-snug">
+            Revenus {money(s.income)}{s.estimated ? " (salaire prévu)" : ""} − dépenses {money(s.expense)} − épargne {money(s.saving)}
+            {!s.isPast && ` − charges à venir ${money(s.pendingCharges)}`}.
           </p>
         )}
       </section>
 
-      {/* Indicateurs */}
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        <Card className="animate-rise" onClick={() => router.push("/profil/comptes")}>
-          <Wallet size={20} className="text-muted" />
-          <p className="mt-2 text-[13px] text-muted">Comptes courants</p>
-          <p className="font-display tabular text-[20px] font-semibold text-ink">{money(s.available)}</p>
-        </Card>
-        <Card className="animate-rise" onClick={() => router.push("/budgets?vue=epargne")}>
-          <Landmark size={20} className="text-muted" />
-          <p className="mt-2 text-[13px] text-muted">Épargne investie</p>
-          <p className="font-display tabular text-[20px] font-semibold text-ink">{money(s.savingsBalance)}</p>
-        </Card>
-        <Card className="animate-rise">
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-ok/15 text-ok">
-            <ArrowDownLeft size={16} />
-          </span>
-          <p className="mt-2 text-[13px] text-muted">Revenus</p>
-          <p className="font-display tabular text-[20px] font-semibold text-ink">{money(s.income)}</p>
-        </Card>
-        <Card className="animate-rise" onClick={() => router.push("/depenses")}>
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-peche/20 text-peche">
-            <ArrowUpRight size={16} />
-          </span>
-          <p className="mt-2 text-[13px] text-muted">Dépenses</p>
-          <p className="font-display tabular text-[20px] font-semibold text-ink">{money(s.expense)}</p>
-        </Card>
-      </div>
+      {/* Camembert d'utilisation */}
+      <SectionTitle href="/stats" action="Analyse">Utilisation du budget</SectionTitle>
+      <Card className="!p-5">
+        <div className="flex flex-col items-center">
+          <Pie size={232} slices={usage.slices.map((x) => ({ id: x.id, value: x.cents, color: x.color }))} selected={slice} onSelect={setSlice} />
+          <div className="mt-4 min-h-12 text-center">
+            {sel ? (
+              <>
+                <p className="font-display tabular text-[24px] font-semibold text-ink">{money(sel.cents)}</p>
+                <p className="text-[13px] text-muted">
+                  {sel.name} · {Math.round(sel.share * 100)} % des revenus
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-display tabular text-[24px] font-semibold text-ink">{money(s.income)}</p>
+                <p className="text-[13px] text-muted">
+                  de revenus{s.estimated ? " (salaire prévu)" : ""} · touchez une part
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+        {usage.overspent > 0 && (
+          <p className="mt-3 rounded-2xl bg-over/12 px-4 py-2.5 text-center text-sm font-medium text-over">
+            Dépassement de {money(usage.overspent)} sur les revenus du mois
+          </p>
+        )}
+        <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2.5">
+          {usage.slices.map((x) => (
+            <li key={x.id}>
+              <button onClick={() => setSlice(slice === x.id ? null : x.id)} className={cx("flex w-full items-center gap-2 text-left text-[13px]", slice && slice !== x.id && "opacity-45")}>
+                <span className="h-3 w-3 shrink-0 rounded-[4px]" style={{ background: x.color }} />
+                <span className="min-w-0 flex-1 truncate text-ink">{x.name}</span>
+                <span className="tabular text-muted">{Math.round(x.share * 100)}%</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </Card>
 
-      {/* Alertes : comptes qui finiront dans le rouge, budgets */}
-      {(negatives.length > 0 || alerts.length > 0) && (
+      {/* Alertes */}
+      {(inRed.length > 0 || alerts.length > 0) && (
         <div className="mt-3 space-y-2">
-          {negatives.map((p) => (
-            <Link key={p.a.id} href="/profil/comptes" className="press flex items-center gap-3 rounded-[22px] border border-over/30 bg-over/10 p-4">
+          {inRed.map(({ l, profile, f }) => (
+            <div key={l.user_id} className="flex items-center gap-3 rounded-[22px] border border-over/30 bg-over/10 p-4">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-over/20 text-over">
                 <TriangleAlert size={20} />
               </span>
               <span className="min-w-0 flex-1 text-sm text-ink">
-                <b>{p.a.name}</b> : {money(p.projected)} prévu fin de mois
-                <span className="block text-[13px] text-muted">
-                  {p.pending > 0 ? `Encore ${money(p.pending)} de prélèvements à venir` : "Déjà dans le rouge"}
-                </span>
+                <b>{profile?.first_name}</b> : {money(f.left)} prévu en fin de mois
+                <span className="block text-[13px] text-muted">Dépenses perso {money(f.personal)} · part du commun {money(f.commonPart)}</span>
               </span>
-            </Link>
+            </div>
           ))}
           {alerts.length > 0 && (
             <Link href="/budgets" className="press flex items-center gap-3 rounded-[22px] bg-surface p-4">
@@ -160,52 +163,38 @@ export default function HomePage() {
               </span>
               <span className="min-w-0 flex-1 text-sm text-ink">
                 {alerts.slice(0, 2).map((a) => `${a.category?.name} ${Math.round(a.ratio * 100)} %`).join(" · ")}
-                <span className="block text-[13px] text-muted">
-                  {alerts.some((a) => a.level === "over") ? "Budget dépassé" : "Budget bientôt atteint"}
-                </span>
+                <span className="block text-[13px] text-muted">{alerts.some((a) => a.level === "over") ? "Budget dépassé" : "Budget bientôt atteint"}</span>
               </span>
             </Link>
           )}
         </div>
       )}
 
-      {/* Le camembert du mois */}
-      <SectionTitle href="/stats" action="Analyse">Où part l&apos;argent</SectionTitle>
-      <Card>
-        <div className="flex items-center gap-4">
-          <Donut
-            size={150}
-            thickness={20}
-            segments={cats.map((c) => ({ value: c.cents, color: c.color }))}
-            center={
-              <>
-                <span className="font-display tabular text-[19px] font-semibold text-ink">{moneyShort(s.expense)}</span>
-                <span className="text-[11px] text-muted">{monthName(month)}</span>
-              </>
-            }
-          />
-          <ul className="min-w-0 flex-1 space-y-1.5">
-            {cats.slice(0, catOpen ? cats.length : 5).map((c) => (
-              <li key={c.id} className="flex items-center gap-2 text-[13px]">
-                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: c.color }} />
-                <span className="min-w-0 flex-1 truncate text-ink">{c.name}</span>
-                <span className="tabular text-muted">{moneyShort(c.cents)}</span>
-              </li>
+      {/* Fin de mois par personne */}
+      {d.members.length > 1 && (
+        <>
+          <SectionTitle href="/profil/repartition" action="Répartition">Fin de mois prévue</SectionTitle>
+          <div className="grid grid-cols-2 gap-3">
+            {forecasts.map(({ l, profile, f }) => (
+              <Card key={l.user_id}>
+                <div className="flex items-center gap-2">
+                  <Avatar profile={profile} size={26} />
+                  <span className="truncate text-sm font-medium text-ink">{profile?.first_name}</span>
+                </div>
+                <p className={cx("font-display tabular mt-2 text-[22px] font-semibold", f.left < 0 ? "text-over" : "text-ink")}>{money(f.left)}</p>
+                <p className="text-[11.5px] leading-snug text-muted">
+                  sur {moneyShort(f.income)} · {f.saving > 0 ? `${moneyShort(f.saving)} épargnés` : "rien d'épargné"}
+                </p>
+              </Card>
             ))}
-            {cats.length === 0 && <li className="text-sm text-muted">Aucune dépense ce mois-ci.</li>}
-          </ul>
-        </div>
-        {cats.length > 5 && (
-          <button onClick={() => setCatOpen((v) => !v)} className="mt-3 w-full text-center text-[13px] font-medium text-muted">
-            {catOpen ? "Moins de détails" : `+ ${cats.length - 5} catégories`}
-          </button>
-        )}
-      </Card>
+          </div>
+        </>
+      )}
 
-      {/* Qui a dépensé quoi */}
+      {/* Qui a dépensé */}
       {scope === "all" && d.members.length > 1 && (
         <>
-          <SectionTitle href="/profil/repartition" action="Répartition">Qui a dépensé</SectionTitle>
+          <SectionTitle href="/depenses">Qui a dépensé</SectionTitle>
           <Card>
             <SplitBar parts={people.map((p) => ({ value: p.cents, color: p.color }))} />
             <div className="mt-3 space-y-3">
@@ -213,37 +202,16 @@ export default function HomePage() {
                 const top = topCatFor(p.id === "common" ? null : p.id);
                 return (
                   <div key={p.id} className="flex items-center gap-3">
-                    {p.profile ? <Avatar profile={p.profile} size={34} /> : <span className="h-[34px] w-[34px] shrink-0 rounded-full bg-grad-lav" />}
+                    {p.profile ? <Avatar profile={p.profile} size={34} /> : <span className="bg-grad-lav h-[34px] w-[34px] shrink-0 rounded-full" />}
                     <span className="min-w-0 flex-1">
                       <span className="block text-[15px] font-medium text-ink">{p.name}</span>
-                      <span className="block truncate text-[12px] text-muted">
-                        {top ? `Surtout ${top.name.toLowerCase()} · ${moneyShort(top.cents)}` : "Rien ce mois-ci"}
-                      </span>
+                      <span className="block truncate text-[12px] text-muted">{top ? `Surtout ${top.name.toLowerCase()} · ${moneyShort(top.cents)}` : "Rien ce mois-ci"}</span>
                     </span>
                     <span className="tabular text-[15px] font-semibold text-ink">{money(p.cents)}</span>
                   </div>
                 );
               })}
             </div>
-          </Card>
-        </>
-      )}
-
-      {/* Prévision des comptes */}
-      {s.isCurrent && projections.length > 0 && (
-        <>
-          <SectionTitle>Fin de mois prévue</SectionTitle>
-          <Card className="py-2">
-            {projections.map((p) => (
-              <div key={p.a.id} className="flex items-center gap-3 py-2">
-                <IconBubble name={p.a.icon} color={p.a.color} size={36} />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[15px] font-medium text-ink">{p.a.name}</span>
-                  <span className="block text-[12px] text-muted">Aujourd&apos;hui {money(p.a.balance_cents)}</span>
-                </span>
-                <span className={cx("tabular text-[15px] font-semibold", p.projected < 0 ? "text-over" : "text-ink")}>{money(p.projected)}</span>
-              </div>
-            ))}
           </Card>
         </>
       )}
@@ -266,10 +234,7 @@ export default function HomePage() {
                   d.openSheet({
                     kind: "expense",
                     charge: { recurring_id: o.recurring.id, due_on: o.due_on },
-                    preset: {
-                      amount_cents: o.amount_cents, label: o.recurring.label, category_id: o.recurring.category_id,
-                      account_id: o.recurring.account_id ?? undefined, assigned_to: o.recurring.assigned_to, occurred_on: o.due_on,
-                    },
+                    preset: { amount_cents: o.amount_cents, label: o.recurring.label, category_id: o.recurring.category_id, assigned_to: o.recurring.assigned_to, occurred_on: o.due_on },
                   })
                 }
                 className="press flex w-full items-center gap-3 py-2.5 text-left"
@@ -277,7 +242,9 @@ export default function HomePage() {
                 <IconBubble name={cat?.icon ?? "repeat"} color={cat?.color ?? "#9C8FE0"} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[15px] font-medium text-ink">{o.recurring.label}</span>
-                  <span className={`block text-[13px] ${o.due_on < today() ? "text-over" : "text-muted"}`}>{relativeDue(o.due_on)}</span>
+                  <span className={`block text-[13px] ${o.due_on < today() ? "text-over" : "text-muted"}`}>
+                    {relativeDue(o.due_on)} · {d.nameOf(o.recurring.assigned_to)}
+                  </span>
                 </span>
                 <span className="tabular text-[15px] font-semibold text-ink">{money(o.amount_cents)}</span>
               </button>
@@ -290,7 +257,7 @@ export default function HomePage() {
       <SectionTitle href="/budgets?vue=epargne" action="Modifier">Épargne</SectionTitle>
       <div className="grid grid-cols-2 gap-3">
         {invest.map((a) => (
-          <Card key={a.id} onClick={() => router.push("/budgets?vue=epargne")} className="overflow-hidden">
+          <Card key={a.id} onClick={() => router.push("/budgets?vue=epargne")}>
             <span className="mb-2 block h-1 w-10 rounded-full" style={{ background: a.color }} />
             <p className="truncate text-[13px] text-muted">{a.owner_id ? d.nameOf(a.owner_id) : "Commun"}</p>
             <p className="truncate text-[12px] text-muted/80">{a.name.replace(/ (Guillaume|Emma)$/, "")}</p>

@@ -1,16 +1,16 @@
 # TANDEM — Deux vies. Un équilibre.
 
-Application mobile (PWA) de gestion financière à deux, pour Guillaume et Emma.
+Application mobile (PWA) de budget mensuel à deux, pour Guillaume et Emma. Aucune connexion bancaire : tout se saisit à la main, en quelques secondes.
 Next.js 15 · TypeScript · Tailwind CSS 4 · Supabase (auth, base, temps réel, stockage) · Vercel.
 
 ## Ce que fait l'app
 
-- **Accueil** (thème sombre partout) : reste à vivre, comptes courants, épargne investie, revenus, dépenses, alertes (compte qui finira dans le rouge, budgets), camembert du mois, qui a dépensé quoi, fin de mois prévue par compte, prochaines charges, épargne. Sélecteur Guillaume / Emma / Ensemble et navigation par mois.
-- **Ajout rapide (+)** : dépense, revenu ou virement interne en quelques secondes. Les virements ne comptent jamais comme dépenses. Si une dépense ressemble à une charge fixe prévue, l'app propose de la rattacher (pas de doublon).
+- **Accueil** (thème sombre partout) : reste à vivre, **camembert d'utilisation des revenus** (chaque catégorie, l'épargne, les charges à venir et le reste), alertes (personne qui finira dans le rouge, budgets), fin de mois prévue pour chacun, qui a dépensé quoi, prochaines charges, épargne. Sélecteur Guillaume / Emma / Ensemble et navigation par mois.
+- **Ajout rapide (+)** : dépense, revenu ou épargne (mise de côté du mois), avec qui a payé : Guillaume, Emma ou commun. L'épargne n'est jamais comptée comme une dépense. Si une dépense ressemble à une charge fixe prévue, l'app propose de la rattacher (pas de doublon).
 - **Dépenses** : total du mois, comparaison avec le mois précédent, répartition par catégorie, recherche, filtres, historique jour par jour. Bouton **Analyse** : statistiques par mois, trimestre ou année.
 - **Budgets** : plafond par catégorie, reconduction automatique, alertes à 80 % et au-delà de 100 %. Onglet **Épargne** : comptes d'investissement (Trade Republic de Guillaume et d'Emma) en montant global ou ligne par ligne (ETF, actions, plus-value), puis projets (bébé, vacances…) avec versements modifiables.
 - **Répartition à deux** (Profil) : 50/50, prorata, prorata après crédits, « même effort » (chacun garde le même % de son salaire) ou personnalisé, avec la part de chacun sur le joint et le reste pour soi.
-- **Profil** : prénom, couleur, avatar, comptes bancaires (privés ou partagés), catégories, charges fixes, partenaire, notifications, thème clair/sombre/auto, export CSV, déconnexion.
+- **Profil** : prénom, couleur, avatar, catégories, charges fixes, partenaire, notifications, thème clair/sombre/auto, export CSV, déconnexion.
 
 ## 1. Supabase
 
@@ -50,7 +50,7 @@ npm run dev
 
 Ouvrez http://localhost:3000 : écran **G / E**, puis code à 6 chiffres.
 
-- **Premier lancement (Guillaume)** : écran « Créer le foyer » → crée le foyer, les 12 catégories par défaut (animaux compris dans Courses, catégorie Crédits), un compte joint et un compte espèces. Ajoutez ensuite vos comptes Trade Republic dans Budgets → Épargne.
+- **Premier lancement (Guillaume)** : écran « Créer le foyer » → crée le foyer et les catégories par défaut (animaux compris dans Courses, catégorie Crédits). Ajoutez ensuite vos comptes Trade Republic dans Budgets → Épargne.
 - **Emma** : Guillaume génère un code dans **Profil → Partenaire**, Emma se connecte et choisit « Rejoindre ».
 
 Ensuite, tout ce que l'un ajoute apparaît immédiatement chez l'autre (Supabase Realtime).
@@ -83,7 +83,6 @@ Elles s'affichent quand l'app est ouverte ou en arrière-plan récent. Pour les 
 ## Sécurité
 
 - RLS active sur toutes les tables : seuls les membres du foyer accèdent aux données.
-- Un compte marqué **privé** (et ses opérations) n'est visible que par son titulaire, y compris dans les soldes.
 - Montants en **centimes entiers** (`bigint`), identifiants **UUID**.
 - Connexion G / E : derrière chaque bouton, un vrai compte Supabase protégé par un code à 6 chiffres (limité en tentatives par Supabase). La session reste ouverte sur l'appareil.
 

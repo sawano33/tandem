@@ -1,5 +1,4 @@
 import type {
-  Account,
   Budget,
   Category,
   RecurringExpense,
@@ -15,9 +14,6 @@ import { addMonths, daysInMonth, monthISO, monthKey, pad, parseISODate, today, t
 /** Une transaction appartient au périmètre si elle est attribuée à la personne (ou tout, pour Ensemble). */
 export const inScope = (assignedTo: string | null, scope: Scope) => scope === "all" || assignedTo === scope;
 
-export const accountInScope = (a: Account, scope: Scope) => scope === "all" || a.owner_id === scope;
-
-export const isSpendable = (a: Account) => a.type !== "epargne";
 
 export function txOfMonth(txs: Transaction[], month: Date) {
   const k = monthKey(month);
@@ -30,16 +26,18 @@ export function txBetween(txs: Transaction[], from: Date, toExclusive: Date) {
   return txs.filter((t) => t.occurred_on >= a && t.occurred_on < b);
 }
 
-/** Les virements internes ne sont jamais comptés comme dépenses ou revenus. */
+/** L'épargne mise de côté n'est pas une dépense : elle est comptée à part. */
 export function totals(txs: Transaction[], scope: Scope) {
   let income = 0;
   let expense = 0;
+  let saving = 0;
   for (const t of txs) {
-    if (t.kind === "transfer" || !inScope(t.assigned_to, scope)) continue;
+    if (!inScope(t.assigned_to, scope)) continue;
     if (t.kind === "income") income += t.amount_cents;
+    else if (t.kind === "saving") saving += t.amount_cents;
     else expense += t.amount_cents;
   }
-  return { income, expense, net: income - expense };
+  return { income, expense, saving, net: income - expense - saving };
 }
 
 export function byCategory(txs: Transaction[], scope: Scope, categories: Category[]) {
@@ -220,35 +218,65 @@ export function goalSaved(goal: SavingsGoal, contributions: SavingsContribution[
 
 export const goalInScope = (g: SavingsGoal, scope: Scope) => scope === "all" || g.owner_id === scope || g.owner_id === null;
 
-// ------------------------------------------------------------------ Synthèse de l'accueil
+// ------------------------------------------------------------------ Synthèse du mois
+/** Revenus du mois : ceux saisis, sinon le salaire prévu (réglages de répartition) pour chaque personne. */
+export function monthIncome(params: {
+  transactions: Transaction[]; month: Date; scope: Scope; memberIds: string[]; planned?: Record<string, number>;
+}) {
+  const { transactions, month, scope, memberIds, planned } = params;
+  const monthTx = txOfMonth(transactions, month);
+  const now = new Date();
+  const notPast = month >= new Date(now.getFullYear(), now.getMonth(), 1);
+  let total = 0;
+  let estimated = false;
+  const people = scope === "all" ? [...memberIds, null] : [scope];
+  for (const p of people) {
+    const recorded = monthTx.filter((t) => t.kind === "income" && t.assigned_to === p).reduce((s, t) => s + t.amount_cents, 0);
+    if (recorded === 0 && p && notPast && planned?.[p]) {
+      total += planned[p];
+      estimated = true;
+    } else total += recorded;
+  }
+  return { income: total, estimated };
+}
+
 export function homeSummary(params: {
-  accounts: Account[];
   transactions: Transaction[];
   recurring: RecurringExpense[];
   scheduled: ScheduledTransaction[];
   month: Date;
   scope: Scope;
+  memberIds: string[];
+  planned?: Record<string, number>;
 }) {
-  const { accounts, transactions, recurring, scheduled, month, scope } = params;
-  const visible = accounts.filter((a) => !a.archived && accountInScope(a, scope));
-  const available = visible.filter(isSpendable).reduce((s, a) => s + a.balance_cents, 0);
-  const savingsBalance = visible.filter((a) => a.type === "epargne").reduce((s, a) => s + a.balance_cents, 0);
-
+  const { transactions, recurring, scheduled, month, scope } = params;
   const monthTx = txOfMonth(transactions, month);
-  const { income, expense } = totals(monthTx, scope);
-
+  const { expense, saving } = totals(monthTx, scope);
+  const { income, estimated } = monthIncome(params);
   const occ = occurrencesForMonth(recurring, scheduled, month, scope);
   const pendingCharges = occ.filter((o) => o.status === "pending").reduce((s, o) => s + o.amount_cents, 0);
-
   const now = new Date();
   const isCurrent = monthKey(now) === monthKey(month);
   const isPast = month < new Date(now.getFullYear(), now.getMonth(), 1);
+  // Ce qu'il reste une fois les dépenses, l'épargne et les charges encore à venir retirées des revenus
+  const resteAVivre = income - expense - saving - (isPast ? 0 : pendingCharges);
+  return { income, estimated, expense, saving, pendingCharges, resteAVivre, isCurrent, isPast, occ };
+}
 
-  // Mois en cours : ce qu'il reste réellement une fois les prélèvements prévus passés.
-  // Mois passé : bilan revenus − dépenses. Mois futur : bilan prévisionnel des charges.
-  const resteAVivre = isCurrent ? available - pendingCharges : isPast ? income - expense : -pendingCharges;
-
-  return { available, savingsBalance, income, expense, pendingCharges, resteAVivre, isCurrent, isPast, occ };
+/** Camembert d'utilisation des revenus : chaque catégorie, l'épargne, les charges à venir et le reste. */
+export function usageSlices(params: {
+  monthTx: Transaction[]; scope: Scope; categories: Category[]; income: number; saving: number; pendingCharges: number;
+}) {
+  const { monthTx, scope, categories, income, saving, pendingCharges } = params;
+  const cats = byCategory(monthTx, scope, categories).map((c) => ({ ...c, kind: "expense" as const }));
+  const spent = cats.reduce((s, c) => s + c.cents, 0);
+  const slices: { id: string; name: string; color: string; icon: string; cents: number; kind: "expense" | "saving" | "pending" | "left" }[] = [...cats];
+  if (saving > 0) slices.push({ id: "saving", name: "Épargne", color: "#C5B6F2", icon: "piggy-bank", cents: saving, kind: "saving" });
+  if (pendingCharges > 0) slices.push({ id: "pending", name: "Charges à venir", color: "#5B4F86", icon: "calendar-clock", cents: pendingCharges, kind: "pending" });
+  const left = income - spent - saving - pendingCharges;
+  if (left > 0) slices.push({ id: "left", name: "Reste disponible", color: "#3A3354", icon: "wallet", cents: left, kind: "left" });
+  const base = Math.max(income, spent + saving + pendingCharges);
+  return { slices: slices.map((s) => ({ ...s, share: base ? s.cents / base : 0 })), base, left, overspent: left < 0 ? -left : 0 };
 }
 
 /** Dépenses cumulées jour par jour (pour la courbe « Mon mois »). */
@@ -270,15 +298,6 @@ export const monthsRange = (end: Date, count: number) =>
   Array.from({ length: count }, (_, i) => addMonths(end, i - count + 1));
 
 export { pad };
-
-// ------------------------------------------------------------------ Prévision par compte
-/** Solde prévu en fin de mois : solde actuel moins les charges fixes encore à prélever sur ce compte. */
-export function accountProjection(account: Account, recurring: RecurringExpense[], scheduled: ScheduledTransaction[]) {
-  const pending = occurrencesForMonth(recurring, scheduled, new Date(), "all")
-    .filter((o) => o.status === "pending" && o.recurring.account_id === account.id)
-    .reduce((s, o) => s + o.amount_cents, 0);
-  return { pending, projected: account.balance_cents - pending };
-}
 
 // ------------------------------------------------------------------ Répartition à deux
 const PER_MONTH: Record<RecurringExpense["frequency"], number> = { weekly: 52 / 12, monthly: 1, quarterly: 1 / 3, yearly: 1 / 12 };
@@ -353,4 +372,20 @@ export function averageIncome(transactions: Transaction[], userId: string) {
       .filter((t) => t.kind === "income" && t.assigned_to === userId)
       .reduce((s, t) => s + t.amount_cents, 0) / 3,
   );
+}
+
+/** Fin de mois prévue par personne : revenu − part des dépenses communes − dépenses perso − épargne − charges perso à venir. */
+export function personForecast(params: {
+  userId: string; share: number; income: number; monthTx: Transaction[]; occ: Occurrence[];
+}) {
+  const { userId, share, income, monthTx, occ } = params;
+  const mine = monthTx.filter((t) => t.assigned_to === userId);
+  const personal = mine.filter((t) => t.kind === "expense").reduce((s, t) => s + t.amount_cents, 0);
+  const saving = mine.filter((t) => t.kind === "saving").reduce((s, t) => s + t.amount_cents, 0);
+  const common =
+    monthTx.filter((t) => t.kind === "expense" && t.assigned_to === null).reduce((s, t) => s + t.amount_cents, 0) +
+    occ.filter((o) => o.status === "pending" && o.recurring.assigned_to === null).reduce((s, o) => s + o.amount_cents, 0);
+  const pendingMine = occ.filter((o) => o.status === "pending" && o.recurring.assigned_to === userId).reduce((s, o) => s + o.amount_cents, 0);
+  const commonPart = Math.round(common * share);
+  return { income, commonPart, personal, saving, pendingMine, left: income - commonPart - personal - saving - pendingMine };
 }

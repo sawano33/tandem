@@ -52,6 +52,8 @@ create table public.invitations (
 );
 create index invitations_household_idx on public.invitations (household_id);
 
+-- Comptes d'épargne / d'investissement (ex. Trade Republic). Aucun lien bancaire :
+-- TANDEM est un budget mensuel saisi à la main ; ces comptes servent seulement à suivre l'épargne de chacun.
 create table public.accounts (
   id                    uuid primary key default gen_random_uuid(),
   household_id          uuid not null references public.households (id) on delete cascade,
@@ -78,7 +80,7 @@ create table public.categories (
   name         text not null,
   icon         text not null default 'tag',
   color        text not null default '#C5B6F2',
-  kind         text not null default 'expense' check (kind in ('expense', 'income')),
+  kind         text not null default 'expense' check (kind in ('expense', 'income', 'saving')),
   is_system    boolean not null default false,
   archived     boolean not null default false,
   sort         int not null default 0,
@@ -89,26 +91,20 @@ create table public.categories (
 create table public.transactions (
   id            uuid primary key default gen_random_uuid(),
   household_id  uuid not null references public.households (id) on delete cascade,
-  kind          text not null check (kind in ('expense', 'income', 'transfer')),
+  kind          text not null check (kind in ('expense', 'income', 'saving')), -- saving = mise de côté du mois
   amount_cents  bigint not null check (amount_cents > 0),
   label         text not null default '',
   category_id   uuid references public.categories (id) on delete set null,
-  account_id    uuid not null references public.accounts (id) on delete restrict,
-  to_account_id uuid references public.accounts (id) on delete restrict,
+  account_id    uuid references public.accounts (id) on delete set null, -- facultatif (épargne vers un compte d'investissement)
   occurred_on   date not null default current_date,
   assigned_to   uuid references auth.users (id) on delete set null, -- null = commun
   note          text,
   created_by    uuid references auth.users (id) on delete set null default auth.uid(),
   created_at    timestamptz not null default now(),
-  updated_at    timestamptz not null default now(),
-  constraint transactions_transfer_target check (
-    (kind = 'transfer' and to_account_id is not null and to_account_id <> account_id)
-    or (kind <> 'transfer' and to_account_id is null)
-  )
+  updated_at    timestamptz not null default now()
 );
 create index transactions_household_date_idx on public.transactions (household_id, occurred_on desc);
 create index transactions_account_idx on public.transactions (account_id);
-create index transactions_to_account_idx on public.transactions (to_account_id);
 create index transactions_category_idx on public.transactions (category_id);
 create index transactions_assigned_idx on public.transactions (assigned_to);
 
@@ -290,22 +286,16 @@ create policy accounts_update on public.accounts for update to authenticated
 create policy accounts_delete on public.accounts for delete to authenticated
   using (public.is_member(household_id) and (not is_private or owner_id = (select auth.uid())));
 
--- transactions : visibles si l'un des comptes concernés est visible
+-- transactions : visibles par le foyer (si rattachées à un compte privé, par son titulaire seulement)
 create policy transactions_select on public.transactions for select to authenticated
-  using (public.is_member(household_id)
-         and (public.can_see_account(account_id)
-              or (to_account_id is not null and public.can_see_account(to_account_id))));
+  using (public.is_member(household_id) and (account_id is null or public.can_see_account(account_id)));
 create policy transactions_insert on public.transactions for insert to authenticated
-  with check (public.is_member(household_id)
-              and public.can_see_account(account_id)
-              and (to_account_id is null or public.can_see_account(to_account_id)));
+  with check (public.is_member(household_id) and (account_id is null or public.can_see_account(account_id)));
 create policy transactions_update on public.transactions for update to authenticated
-  using (public.is_member(household_id) and public.can_see_account(account_id))
-  with check (public.is_member(household_id)
-              and public.can_see_account(account_id)
-              and (to_account_id is null or public.can_see_account(to_account_id)));
+  using (public.is_member(household_id) and (account_id is null or public.can_see_account(account_id)))
+  with check (public.is_member(household_id) and (account_id is null or public.can_see_account(account_id)));
 create policy transactions_delete on public.transactions for delete to authenticated
-  using (public.is_member(household_id) and public.can_see_account(account_id));
+  using (public.is_member(household_id) and (account_id is null or public.can_see_account(account_id)));
 
 -- Tables simplement rattachées au foyer
 create policy categories_all on public.categories for all to authenticated
@@ -320,25 +310,6 @@ create policy goals_all on public.savings_goals for all to authenticated
   using (public.is_member(household_id)) with check (public.is_member(household_id));
 create policy contributions_all on public.savings_contributions for all to authenticated
   using (public.is_member(household_id)) with check (public.is_member(household_id));
-
--- ---------------------------------------------------------------------
--- Soldes des comptes (calculés à partir des transactions visibles)
--- ---------------------------------------------------------------------
-create or replace view public.account_balances with (security_invoker = true) as
-select
-  a.id as account_id,
-  a.household_id,
-  a.initial_balance_cents + coalesce(sum(
-    case
-      when t.kind = 'income'   and t.account_id    = a.id then  t.amount_cents
-      when t.kind = 'expense'  and t.account_id    = a.id then -t.amount_cents
-      when t.kind = 'transfer' and t.account_id    = a.id then -t.amount_cents
-      when t.kind = 'transfer' and t.to_account_id = a.id then  t.amount_cents
-      else 0
-    end), 0)::bigint as balance_cents
-from public.accounts a
-left join public.transactions t on t.account_id = a.id or t.to_account_id = a.id
-group by a.id;
 
 -- ---------------------------------------------------------------------
 -- Profil créé automatiquement à l'inscription
@@ -375,6 +346,7 @@ begin
     (hid, 'Abonnements',  'repeat',        '#9C8FE0', 'expense', true, 10),
     (hid, 'Impôts',       'landmark',      '#7D7A8C', 'expense', true, 11),
     (hid, 'Autres',       'ellipsis',      '#ABA4BF', 'expense', true, 12),
+    (hid, 'Épargne',      'piggy-bank',    '#C5B6F2', 'saving',  true, 1),
     (hid, 'Salaire',        'briefcase',   '#5FB383', 'income', true, 1),
     (hid, 'Remboursement',  'rotate-ccw',  '#5FA8CF', 'income', true, 2),
     (hid, 'Autres revenus', 'sparkles',    '#E8B04B', 'income', true, 3)
@@ -399,10 +371,6 @@ begin
     returning id into hid;
   insert into public.household_members (household_id, user_id, role) values (hid, uid, 'owner');
   perform public.seed_household_defaults(hid);
-
-  insert into public.accounts (household_id, name, type, owner_id, icon, color, sort, created_by) values
-    (hid, 'Compte joint', 'joint',   null, 'users',    '#251D40', 1, uid),
-    (hid, 'Espèces',      'especes', null, 'banknote', '#7FB89A', 9, uid);
   return hid;
 end $$;
 

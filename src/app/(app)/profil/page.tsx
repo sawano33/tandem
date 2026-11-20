@@ -45,11 +45,10 @@ export default function ProfilPage() {
 
       <Card className="mt-4 py-1.5">
         <ListRow href="/profil/moi" left={<Bubble bg="#8B7FD1"><UserRound size={18} /></Bubble>} title="Prénom et avatar" right={chev} />
-        <ListRow href="/profil/comptes" left={<Bubble bg="#251D40"><Wallet size={18} /></Bubble>} title="Comptes bancaires" subtitle={`${d.accounts.filter((a) => !a.archived).length} comptes`} right={chev} />
         <ListRow href="/profil/categories" left={<Bubble bg="#7FB89A"><Shapes size={18} /></Bubble>} title="Catégories" right={chev} />
         <ListRow href="/profil/charges" left={<Bubble bg="#FF9A80"><Repeat size={18} /></Bubble>} title="Charges fixes" subtitle={`${d.recurring_expenses.filter((r) => r.active).length} prélèvements`} right={chev} />
         <ListRow href="/profil/partenaire" left={<Bubble bg="#F5A3C7"><Users size={18} /></Bubble>} title="Partenaire" subtitle={d.partner ? d.partner.first_name : "Inviter"} right={chev} />
-        <ListRow href="/profil/repartition" left={<Bubble bg="#6FC2B4"><Scale size={18} /></Bubble>} title="Répartition à deux" subtitle="Qui verse combien sur le joint" right={chev} />
+        <ListRow href="/profil/repartition" left={<Bubble bg="#6FC2B4"><Scale size={18} /></Bubble>} title="Répartition à deux" subtitle="Qui paie combien du commun" right={chev} />
         <ListRow href="/profil/notifications" left={<Bubble bg="#E8B04B"><Bell size={18} /></Bubble>} title="Notifications" right={chev} />
       </Card>
 

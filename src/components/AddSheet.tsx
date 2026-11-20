@@ -2,7 +2,7 @@
 
 import { confirmAction } from "@/lib/demo";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, Link2, Trash2 } from "lucide-react";
+import { Link2, Trash2 } from "lucide-react";
 import { useData } from "@/lib/store";
 import { centsToInput, money, parseAmount, today, toISODate, parseISODate, monthStart, dayShort } from "@/lib/format";
 import { effectiveBudgets, matchPendingCharge, occurrencesForMonth, type Occurrence } from "@/lib/finance";
@@ -10,7 +10,7 @@ import { IconBubble, Icon } from "@/lib/icons";
 import type { TxKind } from "@/lib/types";
 import { Button, Chip, Segmented, Sheet, cx, inputClass } from "./ui";
 
-const LAST_ACCOUNT = "tandem.lastAccount";
+const LAST_WHO = "tandem.lastWho";
 
 export function AddSheet() {
   const d = useData();
@@ -21,8 +21,7 @@ export function AddSheet() {
   const [amount, setAmount] = useState("");
   const [label, setLabel] = useState("");
   const [categoryId, setCategoryId] = useState<string | null>(null);
-  const [accountId, setAccountId] = useState<string | null>(null);
-  const [toAccountId, setToAccountId] = useState<string | null>(null);
+  const [accountId, setAccountId] = useState<string | null>(null); // épargne : compte d'investissement crédité
   const [date, setDate] = useState(today());
   const [assigned, setAssigned] = useState<string | null>(null);
   const [linked, setLinked] = useState<Occurrence | null>(null);
@@ -30,13 +29,14 @@ export function AddSheet() {
   const [saving, setSaving] = useState(false);
   const amountRef = useRef<HTMLInputElement>(null);
 
-  const accounts = useMemo(() => d.accounts.filter((a) => !a.archived), [d.accounts]);
-  const defaultAccount = () => {
-    let last: string | null = null;
+  const savingsAccounts = useMemo(() => d.accounts.filter((a) => !a.archived && a.type === "epargne"), [d.accounts]);
+  const defaultWho = (): string | null => {
     try {
-      last = localStorage.getItem(LAST_ACCOUNT);
+      const last = localStorage.getItem(LAST_WHO);
+      if (last === "common") return null;
+      if (last && d.members.some((m) => m.user_id === last)) return last;
     } catch {}
-    return accounts.find((a) => a.id === last)?.id ?? accounts.find((a) => a.type !== "epargne")?.id ?? accounts[0]?.id ?? null;
+    return d.user?.id ?? null;
   };
 
   // (Ré)initialisation à l'ouverture
@@ -47,12 +47,9 @@ export function AddSheet() {
     setAmount(p?.amount_cents ? centsToInput(p.amount_cents) : "");
     setLabel(p?.label ?? "");
     setCategoryId(p?.category_id ?? null);
-    const acc = p?.account_id ?? defaultAccount();
-    setAccountId(acc);
-    setToAccountId(p?.to_account_id ?? null);
+    setAccountId(p?.account_id ?? null);
     setDate(p?.occurred_on ?? today());
-    const owner = accounts.find((a) => a.id === acc)?.owner_id ?? null;
-    setAssigned(p && "assigned_to" in p ? (p.assigned_to ?? null) : owner);
+    setAssigned(p && "assigned_to" in p ? (p.assigned_to ?? null) : defaultWho());
     setDismissedMatch(null);
     setLinked(null);
     if (sheet.charge) {
@@ -66,7 +63,7 @@ export function AddSheet() {
   }, [sheet.open]);
 
   const cents = parseAmount(amount);
-  const categories = d.categories.filter((c) => c.kind === (kind === "income" ? "income" : "expense") && !c.archived);
+  const categories = d.categories.filter((c) => c.kind === kind && !c.archived);
 
   // Anti-doublon : proposer de rattacher la dépense à une échéance prévue
   const occurrences = useMemo(
@@ -84,17 +81,10 @@ export function AddSheet() {
     if (!label) setLabel(o.recurring.label);
     if (!cents) setAmount(centsToInput(o.amount_cents));
     if (!categoryId && o.recurring.category_id) setCategoryId(o.recurring.category_id);
-    if (o.recurring.account_id) setAccountId(o.recurring.account_id);
     setAssigned(o.recurring.assigned_to);
   };
 
-  const pickAccount = (id: string) => {
-    setAccountId(id);
-    if (!editing) setAssigned(accounts.find((a) => a.id === id)?.owner_id ?? null);
-  };
-
-  const valid =
-    !!cents && !!accountId && (kind !== "transfer" || (!!toAccountId && toAccountId !== accountId));
+  const valid = !!cents;
 
   async function save() {
     if (!valid || saving) return;
@@ -102,15 +92,14 @@ export function AddSheet() {
     const row = {
       kind,
       amount_cents: cents!,
-      label: label.trim() || (kind === "transfer" ? "Virement" : categories.find((c) => c.id === categoryId)?.name ?? ""),
-      category_id: kind === "transfer" ? null : categoryId,
-      account_id: accountId,
-      to_account_id: kind === "transfer" ? toAccountId : null,
+      label: label.trim() || (kind === "saving" ? "Épargne" : categories.find((c) => c.id === categoryId)?.name ?? ""),
+      category_id: kind === "saving" ? (categories[0]?.id ?? null) : categoryId,
+      account_id: kind === "saving" ? accountId : null,
       occurred_on: date,
-      assigned_to: kind === "transfer" ? null : assigned,
+      assigned_to: assigned,
     };
     try {
-      localStorage.setItem(LAST_ACCOUNT, accountId!);
+      localStorage.setItem(LAST_WHO, assigned ?? "common");
     } catch {}
 
     if (editing) {
@@ -153,7 +142,7 @@ export function AddSheet() {
           d.toast(`Budget ${name} à ${Math.round((after / b.amount_cents) * 100)} %`, "warn");
         } else d.toast(kind === "expense" ? "Dépense ajoutée" : "Ajouté");
       } else d.toast("Dépense ajoutée");
-    } else d.toast(kind === "income" ? "Revenu ajouté" : kind === "transfer" ? "Virement enregistré" : "Dépense ajoutée");
+    } else d.toast(kind === "income" ? "Revenu ajouté" : kind === "saving" ? "Épargne enregistrée" : "Dépense ajoutée");
     closeSheet();
   }
 
@@ -167,7 +156,7 @@ export function AddSheet() {
   }
 
   const yesterday = toISODate(new Date(Date.now() - 864e5));
-  const title = editing ? "Modifier" : kind === "income" ? "Nouveau revenu" : kind === "transfer" ? "Nouveau virement" : "Nouvelle dépense";
+  const title = editing ? "Modifier" : kind === "income" ? "Nouveau revenu" : kind === "saving" ? "Mettre de côté" : "Nouvelle dépense";
 
   return (
     <Sheet
@@ -198,7 +187,7 @@ export function AddSheet() {
           options={[
             { value: "expense", label: "Dépense" },
             { value: "income", label: "Revenu" },
-            { value: "transfer", label: "Virement" },
+            { value: "saving", label: "Épargne" },
           ]}
         />
       )}
@@ -221,7 +210,7 @@ export function AddSheet() {
       <input
         value={label}
         onChange={(e) => setLabel(e.target.value)}
-        placeholder={kind === "transfer" ? "Intitulé (facultatif)" : "Intitulé, ex. Carrefour"}
+        placeholder={kind === "saving" ? "Ex. Versement Trade Republic" : kind === "income" ? "Ex. Salaire" : "Intitulé, ex. Carrefour"}
         className={cx(inputClass, "mt-4")}
         enterKeyHint="done"
       />
@@ -254,7 +243,7 @@ export function AddSheet() {
       )}
 
       {/* Catégorie */}
-      {kind !== "transfer" && (
+      {kind !== "saving" && (
         <>
           <p className="mb-2 mt-5 px-1 text-[13px] font-medium text-muted">Catégorie</p>
           <div className="grid grid-cols-4 gap-2">
@@ -277,40 +266,25 @@ export function AddSheet() {
         </>
       )}
 
-      {/* Comptes */}
-      <p className="mb-2 mt-5 px-1 text-[13px] font-medium text-muted">
-        {kind === "income" ? "Compte crédité" : kind === "transfer" ? "Depuis" : "Compte débité"}
-      </p>
-      <div className="flex flex-wrap gap-2">
-        {accounts.map((a) => (
-          <Chip key={a.id} active={a.id === accountId} onClick={() => pickAccount(a.id)}>
-            <Icon name={a.icon} size={16} /> {a.name}
-          </Chip>
-        ))}
-      </div>
-      {kind === "transfer" && (
+      {/* Épargne : vers quel compte d'investissement (facultatif) */}
+      {kind === "saving" && savingsAccounts.length > 0 && (
         <>
-          <div className="my-2 flex justify-center text-muted">
-            <ArrowDown size={18} />
-          </div>
-          <p className="mb-2 px-1 text-[13px] font-medium text-muted">Vers</p>
+          <p className="mb-2 mt-5 px-1 text-[13px] font-medium text-muted">Vers (facultatif)</p>
           <div className="flex flex-wrap gap-2">
-            {accounts
-              .filter((a) => a.id !== accountId)
-              .map((a) => (
-                <Chip key={a.id} active={a.id === toAccountId} onClick={() => setToAccountId(a.id)}>
-                  <Icon name={a.icon} size={16} /> {a.name}
-                </Chip>
-              ))}
+            {savingsAccounts.map((a) => (
+              <Chip key={a.id} active={a.id === accountId} onClick={() => { setAccountId(a.id === accountId ? null : a.id); if (a.owner_id) setAssigned(a.owner_id); }}>
+                <Icon name={a.icon} size={16} /> {a.name}
+              </Chip>
+            ))}
           </div>
-          <p className="mt-2 px-1 text-xs text-muted">Un virement interne n&apos;est pas compté comme une dépense.</p>
+          <p className="mt-2 px-1 text-xs text-muted">L&apos;épargne n&apos;est pas une dépense : elle apparaît à part dans le camembert.</p>
         </>
       )}
 
       {/* Pour qui */}
-      {kind !== "transfer" && d.members.length > 0 && (
+      {d.members.length > 0 && (
         <>
-          <p className="mb-2 mt-5 px-1 text-[13px] font-medium text-muted">{kind === "income" ? "Revenu de" : "Dépense de"}</p>
+          <p className="mb-2 mt-5 px-1 text-[13px] font-medium text-muted">{kind === "income" ? "Revenu de" : kind === "saving" ? "Épargne de" : "Qui a payé"}</p>
           <div className="flex flex-wrap gap-2">
             {d.members.map((m) => (
               <Chip key={m.user_id} active={assigned === m.user_id} onClick={() => setAssigned(m.user_id)}>

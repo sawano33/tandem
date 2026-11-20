@@ -63,7 +63,7 @@ export type Account = {
   /** comptes d'investissement : valeur globale saisie à la main */
   manual_value_cents?: number | null;
   value_updated_at?: string | null;
-  /** calculé via la vue account_balances */
+  /** valeur calculée : somme des lignes, sinon valeur saisie */
   balance_cents: number;
 };
 
@@ -86,13 +86,14 @@ export type Category = {
   name: string;
   icon: string;
   color: string;
-  kind: "expense" | "income";
+  kind: "expense" | "income" | "saving";
   is_system: boolean;
   archived: boolean;
   sort: number;
 };
 
-export type TxKind = "expense" | "income" | "transfer";
+/** saving = argent mis de côté ce mois-ci (ex. versement Trade Republic) */
+export type TxKind = "expense" | "income" | "saving";
 
 export type Transaction = {
   id: UUID;
@@ -101,8 +102,7 @@ export type Transaction = {
   amount_cents: number;
   label: string;
   category_id: UUID | null;
-  account_id: UUID;
-  to_account_id: UUID | null;
+  account_id: UUID | null; // facultatif : compte d'épargne crédité
   occurred_on: string; // YYYY-MM-DD
   assigned_to: UUID | null; // null = commun
   note: string | null;

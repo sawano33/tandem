@@ -28,7 +28,7 @@ export default function DepensesPage() {
 
   const list = monthTx.filter(
     (t) =>
-      (t.kind === "transfer" ? scope === "all" : inScope(t.assigned_to, scope)) &&
+      inScope(t.assigned_to, scope) &&
       (kind === "all" || t.kind === kind) &&
       (!cat || (t.category_id ?? "none") === cat) &&
       (!q || t.label.toLowerCase().includes(q.toLowerCase())),
@@ -106,7 +106,7 @@ export default function DepensesPage() {
             ["all", "Toutes"],
             ["expense", "Dépenses"],
             ["income", "Revenus"],
-            ["transfer", "Virements"],
+            ["saving", "Épargne"],
           ] as const
         ).map(([v, l]) => (
           <Chip key={v} active={kind === v} onClick={() => setKind(v)}>

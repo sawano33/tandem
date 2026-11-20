@@ -112,3 +112,60 @@ export function SplitBar({ parts }: { parts: { value: number; color: string }[] 
     </div>
   );
 }
+
+/** Vrai camembert (parts pleines), avec pourcentages sur les grosses parts et sélection au toucher. */
+export function Pie({
+  slices, size = 220, selected, onSelect,
+}: {
+  slices: { id: string; value: number; color: string }[];
+  size?: number;
+  selected?: string | null;
+  onSelect?: (id: string | null) => void;
+}) {
+  const r = size / 2;
+  const total = slices.reduce((s, x) => s + x.value, 0);
+  let angle = -Math.PI / 2;
+  const pt = (a: number, rad: number) => [r + rad * Math.cos(a), r + rad * Math.sin(a)];
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0 overflow-visible" role="img" aria-label="Camembert d'utilisation du budget">
+      {total === 0 && <circle cx={r} cy={r} r={r - 2} fill="var(--track)" />}
+      {total > 0 &&
+        slices.map((s) => {
+          const sweep = (s.value / total) * Math.PI * 2;
+          const a0 = angle;
+          const a1 = angle + sweep;
+          angle = a1;
+          const mid = (a0 + a1) / 2;
+          const isSel = selected === s.id;
+          const push = isSel ? 8 : 0;
+          const dx = Math.cos(mid) * push;
+          const dy = Math.sin(mid) * push;
+          const rad = r - 10;
+          const [x0, y0] = pt(a0, rad);
+          const [x1, y1] = pt(a1, rad);
+          const large = sweep > Math.PI ? 1 : 0;
+          const d =
+            sweep >= Math.PI * 2 - 0.0001
+              ? `M ${r} ${r - rad} A ${rad} ${rad} 0 1 1 ${r - 0.01} ${r - rad} Z`
+              : `M ${r} ${r} L ${x0} ${y0} A ${rad} ${rad} 0 ${large} 1 ${x1} ${y1} Z`;
+          const share = s.value / total;
+          const [lx, ly] = pt(mid, rad * 0.64);
+          return (
+            <g
+              key={s.id}
+              transform={`translate(${dx} ${dy})`}
+              onClick={() => onSelect?.(isSel ? null : s.id)}
+              style={{ cursor: "pointer", transition: "transform 250ms ease", opacity: selected && !isSel ? 0.45 : 1 }}
+            >
+              <path d={d} fill={s.color} stroke="var(--surface)" strokeWidth={2} strokeLinejoin="round" />
+              {share >= 0.07 && (
+                <text x={lx} y={ly} textAnchor="middle" dominantBaseline="central" className="tabular" fontSize={13} fontWeight={700} fill="#1A1430">
+                  {Math.round(share * 100)}%
+                </text>
+              )}
+            </g>
+          );
+        })}
+    </svg>
+  );
+}

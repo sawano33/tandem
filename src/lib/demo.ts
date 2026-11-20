@@ -41,7 +41,7 @@ export function buildDemo() {
     { household_id: H, user_id: DEMO_E, role: "member", joined_at: "2026-01-01T10:05:00Z" },
   ];
 
-  const cat = (name: string, icon: string, color: string, kind: "expense" | "income", sort: number): Category => ({
+  const cat = (name: string, icon: string, color: string, kind: Category["kind"], sort: number): Category => ({
     id: id(), household_id: H, name, icon, color, kind, is_system: true, archived: false, sort,
   });
   const categories = [
@@ -60,6 +60,7 @@ export function buildDemo() {
     cat("Salaire", "briefcase", "#5FB383", "income", 1),
     cat("Remboursement", "rotate-ccw", "#5FA8CF", "income", 2),
     cat("Autres revenus", "sparkles", "#E8B04B", "income", 3),
+    cat("Épargne", "piggy-bank", "#C5B6F2", "saving", 1),
   ];
   const C = Object.fromEntries(categories.map((c) => [c.name, c.id]));
 
@@ -68,14 +69,10 @@ export function buildDemo() {
     is_private: false, archived: false, sort, balance_cents: 0, manual_value_cents: manual, value_updated_at: manual ? new Date().toISOString() : null,
   });
   const accounts = [
-    acc("Compte Guillaume", "courant", DEMO_G, 42000, "user", "#7DB0F7", 1),
-    acc("Compte Emma", "courant", DEMO_E, 9000, "user", "#F5A3C7", 2),
-    acc("Compte joint", "joint", null, 30000, "users", "#C5B6F2", 3),
-    acc("Trade Republic Guillaume", "epargne", DEMO_G, 0, "landmark", "#7DB0F7", 4),
-    acc("Trade Republic Emma", "epargne", DEMO_E, 0, "landmark", "#F5A3C7", 5, 135000),
-    acc("Espèces", "especes", null, 6000, "banknote", "#E8B04B", 6),
+    acc("Trade Republic Guillaume", "epargne", DEMO_G, 0, "landmark", "#7DB0F7", 1),
+    acc("Trade Republic Emma", "epargne", DEMO_E, 0, "landmark", "#F5A3C7", 2, 135000),
   ];
-  const [aG, aE, aJ, aTRG, aTRE, aCash] = accounts.map((a) => a.id);
+  const [aTRG, aTRE] = accounts.map((a) => a.id);
 
   const holdings: Holding[] = [
     ["iShares Core MSCI World", "IE00B4L5Y983", 58.4, 582000, 520000],
@@ -89,25 +86,25 @@ export function buildDemo() {
   const now = new Date();
   const thisMonth = monthStart(now);
   const todayIso = toISODate(now);
-  const R = (label: string, amount: number, cat: string, account: string, frequency: RecurringExpense["frequency"], day: number, who: string | null) =>
-    ({ label, amount_cents: amount, category_id: C[cat], account_id: account, frequency, day_of_month: day, start_date: "2025-01-01", end_date: null, assigned_to: who, active: true });
+  const R = (label: string, amount: number, cat: string, _account: null, frequency: RecurringExpense["frequency"], day: number, who: string | null) =>
+    ({ label, amount_cents: amount, category_id: C[cat], account_id: null, frequency, day_of_month: day, start_date: "2025-01-01", end_date: null, assigned_to: who, active: true });
   const recurring_expenses: RecurringExpense[] = [
-    R("Loyer", 105000, "Logement", aJ, "monthly", 5, null),
-    R("Électricité", 8400, "Logement", aJ, "monthly", 12, null),
-    R("Eau", 6500, "Logement", aJ, "quarterly", 18, null),
-    R("Assurance habitation", 2890, "Logement", aJ, "monthly", 8, null),
-    R("Crédit auto", 32000, "Crédits", aG, "monthly", 10, DEMO_G),
-    R("Internet", 3999, "Abonnements", aJ, "monthly", 15, null),
-    R("Forfait Guillaume", 1999, "Abonnements", aG, "monthly", 22, DEMO_G),
-    R("Forfait Emma", 1599, "Abonnements", aE, "monthly", 24, DEMO_E),
-    R("Netflix", 1349, "Abonnements", aJ, "monthly", 27, null),
+    R("Loyer", 105000, "Logement", null, "monthly", 5, null),
+    R("Électricité", 8400, "Logement", null, "monthly", 12, null),
+    R("Eau", 6500, "Logement", null, "quarterly", 18, null),
+    R("Assurance habitation", 2890, "Logement", null, "monthly", 8, null),
+    R("Crédit auto", 32000, "Crédits", null, "monthly", 10, DEMO_G),
+    R("Internet", 3999, "Abonnements", null, "monthly", 15, null),
+    R("Forfait Guillaume", 1999, "Abonnements", null, "monthly", 22, DEMO_G),
+    R("Forfait Emma", 1599, "Abonnements", null, "monthly", 24, DEMO_E),
+    R("Netflix", 1349, "Abonnements", null, "monthly", 27, null),
   ].map((r) => ({ ...r, id: id(), household_id: H }));
 
   const transactions: Transaction[] = [];
   const scheduled_transactions: ScheduledTransaction[] = [];
-  const tx = (t: Partial<Transaction> & Pick<Transaction, "kind" | "amount_cents" | "account_id" | "occurred_on">) => {
+  const tx = (t: Partial<Transaction> & Pick<Transaction, "kind" | "amount_cents" | "occurred_on">) => {
     const row: Transaction = {
-      id: id(), household_id: H, label: "", category_id: null, to_account_id: null, assigned_to: null,
+      id: id(), household_id: H, label: "", category_id: null, account_id: null, assigned_to: null,
       note: null, created_by: pick([DEMO_G, DEMO_E]), created_at: `${t.occurred_on}T12:00:00Z`, ...t,
     };
     transactions.push(row);
@@ -120,20 +117,18 @@ export function buildDemo() {
     const day = (d: number) => toISODate(new Date(month.getFullYear(), month.getMonth(), Math.min(d, last)));
 
     // Salaires et alimentation du compte joint (au prorata après crédit)
-    tx({ kind: "income", amount_cents: 200600, label: "Salaire", category_id: C["Salaire"], account_id: aG, occurred_on: day(1), assigned_to: DEMO_G, created_by: DEMO_G });
-    tx({ kind: "income", amount_cents: 100600, label: "Salaire", category_id: C["Salaire"], account_id: aE, occurred_on: day(1), assigned_to: DEMO_E, created_by: DEMO_E });
-    tx({ kind: "transfer", amount_cents: 115000, label: "Part du joint", account_id: aG, to_account_id: aJ, occurred_on: day(2) });
-    tx({ kind: "transfer", amount_cents: 69000, label: "Part du joint", account_id: aE, to_account_id: aJ, occurred_on: day(2) });
+    tx({ kind: "income", amount_cents: 200600, label: "Salaire", category_id: C["Salaire"], occurred_on: day(1), assigned_to: DEMO_G, created_by: DEMO_G });
+    tx({ kind: "income", amount_cents: 100600, label: "Salaire", category_id: C["Salaire"], occurred_on: day(1), assigned_to: DEMO_E, created_by: DEMO_E });
     if (last >= 3) {
-      tx({ kind: "transfer", amount_cents: 20000, label: "Versement Trade Republic", account_id: aG, to_account_id: aTRG, occurred_on: day(3) });
-      tx({ kind: "transfer", amount_cents: 3000, label: "Versement Trade Republic", account_id: aE, to_account_id: aTRE, occurred_on: day(3) });
+      tx({ kind: "saving", amount_cents: 20000, label: "Versement Trade Republic", category_id: C["Épargne"], account_id: aTRG, occurred_on: day(3), assigned_to: DEMO_G, created_by: DEMO_G });
+      tx({ kind: "saving", amount_cents: 3000, label: "Versement Trade Republic", category_id: C["Épargne"], account_id: aTRE, occurred_on: day(3), assigned_to: DEMO_E, created_by: DEMO_E });
     }
 
     // Charges fixes passées → réglées
     for (const r of recurring_expenses) {
       for (const due of dueDatesInMonth(r, month)) {
         if (due > todayIso) continue;
-        const t = tx({ kind: "expense", amount_cents: r.amount_cents, label: r.label, category_id: r.category_id, account_id: r.account_id!, occurred_on: due, assigned_to: r.assigned_to });
+        const t = tx({ kind: "expense", amount_cents: r.amount_cents, label: r.label, category_id: r.category_id, occurred_on: due, assigned_to: r.assigned_to });
         scheduled_transactions.push({ id: id(), household_id: H, recurring_expense_id: r.id, due_on: due, amount_cents: r.amount_cents, status: "paid", transaction_id: t.id });
       }
     }
@@ -142,31 +137,26 @@ export function buildDemo() {
     const times = (k: number) => Math.max(1, Math.round(k * scale));
     // Courses communes (animaux compris : le gros sac de croquettes d'Ohana)
     for (let i = 0; i < times(8); i++)
-      tx({ kind: "expense", amount_cents: between(2500, 7500), label: pick(["Carrefour", "Lidl", "Marché", "Picard", "Biocoop"]), category_id: C["Courses"], account_id: aJ, occurred_on: day(between(1, last)) });
-    if (last >= 6) tx({ kind: "expense", amount_cents: 4990, label: "Croquettes Ohana (gros sac)", category_id: C["Courses"], account_id: aJ, occurred_on: day(6) });
-    if (last >= 14) tx({ kind: "expense", amount_cents: between(1200, 1800), label: "Litière Miel & Booh", category_id: C["Courses"], account_id: aJ, occurred_on: day(14) });
+      tx({ kind: "expense", amount_cents: between(2500, 7500), label: pick(["Carrefour", "Lidl", "Marché", "Picard", "Biocoop"]), category_id: C["Courses"], occurred_on: day(between(1, last)) });
+    if (last >= 6) tx({ kind: "expense", amount_cents: 4990, label: "Croquettes Ohana (gros sac)", category_id: C["Courses"], occurred_on: day(6) });
+    if (last >= 14) tx({ kind: "expense", amount_cents: between(1200, 1800), label: "Litière Miel & Booh", category_id: C["Courses"], occurred_on: day(14) });
     // Restaurants : le poste à ralentir
     for (let i = 0; i < times(7); i++) {
       const who = pick([DEMO_G, DEMO_E, DEMO_E, DEMO_E, null]);
-      tx({ kind: "expense", amount_cents: between(1800, 6500), label: pick(["Sushi Shop", "Big Mamma", "Brunch", "Deliveroo", "Uber Eats", "Burger"]), category_id: C["Restaurants"], account_id: who === DEMO_G ? aG : who === DEMO_E ? aE : aJ, occurred_on: day(between(1, last)), assigned_to: who });
+      tx({ kind: "expense", amount_cents: between(1800, 6500), label: pick(["Sushi Shop", "Big Mamma", "Brunch", "Deliveroo", "Uber Eats", "Burger"]), category_id: C["Restaurants"], occurred_on: day(between(1, last)), assigned_to: who });
     }
     // Personnel
     for (let i = 0; i < times(4); i++)
-      tx({ kind: "expense", amount_cents: between(2000, 6000), label: pick(["Zara", "Sephora", "Vinted", "Amazon"]), category_id: C["Shopping"], account_id: aE, occurred_on: day(between(1, last)), assigned_to: DEMO_E });
+      tx({ kind: "expense", amount_cents: between(2000, 6000), label: pick(["Zara", "Sephora", "Vinted", "Amazon"]), category_id: C["Shopping"], occurred_on: day(between(1, last)), assigned_to: DEMO_E });
     for (let i = 0; i < times(2); i++)
-      tx({ kind: "expense", amount_cents: between(3000, 6000), label: pick(["Essence", "Péage", "Parking"]), category_id: C["Transport"], account_id: aG, occurred_on: day(between(1, last)), assigned_to: DEMO_G });
+      tx({ kind: "expense", amount_cents: between(3000, 6000), label: pick(["Essence", "Péage", "Parking"]), category_id: C["Transport"], occurred_on: day(between(1, last)), assigned_to: DEMO_G });
     for (let i = 0; i < times(2); i++)
-      tx({ kind: "expense", amount_cents: between(1500, 4000), label: pick(["Cinéma", "Escalade", "Livres", "Jeu vidéo"]), category_id: C["Loisirs"], account_id: pick([aG, aE]), occurred_on: day(between(1, last)), assigned_to: pick([DEMO_G, DEMO_E]) });
-    tx({ kind: "expense", amount_cents: between(3000, 9000), label: pick(["Body & pyjamas", "Biberons", "Échographie", "Poussette (acompte)"]), category_id: C["Bébé"], account_id: aJ, occurred_on: day(between(1, last)) });
-    if (rnd() > 0.5) tx({ kind: "expense", amount_cents: between(1500, 4500), label: "Pharmacie", category_id: C["Santé"], account_id: aE, occurred_on: day(between(1, last)), assigned_to: DEMO_E });
-    if (rnd() > 0.6) tx({ kind: "expense", amount_cents: 2000, label: "Retrait", category_id: C["Autres"], account_id: aCash, occurred_on: day(between(1, last)) });
+      tx({ kind: "expense", amount_cents: between(1500, 4000), label: pick(["Cinéma", "Escalade", "Livres", "Jeu vidéo"]), category_id: C["Loisirs"], occurred_on: day(between(1, last)), assigned_to: pick([DEMO_G, DEMO_E]) });
+    tx({ kind: "expense", amount_cents: between(3000, 9000), label: pick(["Body & pyjamas", "Biberons", "Échographie", "Poussette (acompte)"]), category_id: C["Bébé"], occurred_on: day(between(1, last)) });
+    if (rnd() > 0.5) tx({ kind: "expense", amount_cents: between(1500, 4500), label: "Pharmacie", category_id: C["Santé"], occurred_on: day(between(1, last)), assigned_to: DEMO_E });
+    if (rnd() > 0.6) tx({ kind: "expense", amount_cents: 2000, label: "Cadeau anniversaire", category_id: C["Autres"], occurred_on: day(between(1, last)) });
   }
-  // Fix assignments for transactions created on personal accounts
-  for (const t of transactions) {
-    if (t.kind === "transfer") continue;
-    if (t.account_id === aE) t.created_by = DEMO_E;
-    if (t.account_id === aG) t.created_by = DEMO_G;
-  }
+  for (const t of transactions) if (t.assigned_to) t.created_by = t.assigned_to;
   transactions.sort((a, b) => b.occurred_on.localeCompare(a.occurred_on));
 
   const budgets: Budget[] = [
@@ -196,18 +186,6 @@ export function buildDemo() {
     household, profiles, members,
     data: { accounts, categories, transactions, budgets, recurring_expenses, scheduled_transactions, savings_goals, savings_contributions, holdings },
   };
-}
-
-/** Soldes calculés localement (équivalent de la vue account_balances). */
-export function computeBalances(accounts: Account[], txs: Transaction[]): Account[] {
-  return accounts.map((a) => {
-    let b = a.initial_balance_cents;
-    for (const t of txs) {
-      if (t.account_id === a.id) b += t.kind === "income" ? t.amount_cents : -t.amount_cents;
-      else if (t.kind === "transfer" && t.to_account_id === a.id) b += t.amount_cents;
-    }
-    return { ...a, balance_cents: b };
-  });
 }
 
 // Identité de démo : localStorage si disponible, sinon mémoire (navigateurs restreints)

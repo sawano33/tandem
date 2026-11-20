@@ -87,7 +87,6 @@ function ChargeSheet({ item, onClose }: { item: RecurringExpense | "new" | null;
   const [freq, setFreq] = useState<Frequency>("monthly");
   const [day, setDay] = useState("5");
   const [cat, setCat] = useState<string | null>(null);
-  const [acc, setAcc] = useState<string | null>(null);
   const [who, setWho] = useState<string | null>(null);
   const [active, setActive] = useState(true);
   const k = item ? (r?.id ?? "new") : "";
@@ -98,7 +97,6 @@ function ChargeSheet({ item, onClose }: { item: RecurringExpense | "new" | null;
     setFreq(r?.frequency ?? "monthly");
     setDay(String(r?.day_of_month ?? 5));
     setCat(r?.category_id ?? d.categories.find((c) => c.name === "Logement")?.id ?? null);
-    setAcc(r?.account_id ?? d.accounts.find((a) => a.type === "joint")?.id ?? null);
     setWho(r ? r.assigned_to : null);
     setActive(r?.active ?? true);
   }
@@ -108,7 +106,7 @@ function ChargeSheet({ item, onClose }: { item: RecurringExpense | "new" | null;
   async function save() {
     if (!cents || !label.trim()) return;
     const row = {
-      label: label.trim(), amount_cents: cents, frequency: freq, day_of_month: dayN, category_id: cat, account_id: acc,
+      label: label.trim(), amount_cents: cents, frequency: freq, day_of_month: dayN, category_id: cat, account_id: null,
       assigned_to: who, active, ...(r ? {} : { start_date: today().slice(0, 8) + "01" }),
     };
     const ok = r ? await d.update("recurring_expenses", r.id, row) : !!(await d.insert("recurring_expenses", row));
@@ -170,14 +168,6 @@ function ChargeSheet({ item, onClose }: { item: RecurringExpense | "new" | null;
               <Chip key={c.id} active={cat === c.id} color={c.color} onClick={() => setCat(c.id)}>
                 <Icon name={c.icon} size={16} /> {c.name}
               </Chip>
-            ))}
-          </div>
-        </div>
-        <div>
-          <p className="mb-2 px-1 text-[13px] font-medium text-muted">Compte prélevé</p>
-          <div className="flex flex-wrap gap-2">
-            {d.accounts.filter((a) => !a.archived).map((a) => (
-              <Chip key={a.id} active={acc === a.id} onClick={() => setAcc(a.id)}>{a.name}</Chip>
             ))}
           </div>
         </div>
