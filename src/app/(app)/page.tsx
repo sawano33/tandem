@@ -59,13 +59,13 @@ export default function HomePage() {
 
   const invest = d.accounts.filter((a) => !a.archived && a.type === "epargne" && (scope === "all" || a.owner_id === scope));
   const goals = d.savings_goals.filter((g) => !g.archived && goalInScope(g, scope));
-  const title = d.members.length > 1 ? d.members.map((m) => m.profile?.first_name).filter(Boolean).join(" & ") : d.household?.name;
 
   return (
     <Page>
       <header className="flex items-center gap-3 pt-2">
-        <LogoLoop />
-        <h1 className="font-display min-w-0 flex-1 truncate text-[21px] font-semibold text-ink">{title}</h1>
+        <h1 className="min-w-0 flex-1">
+          <LogoLoop size={30} withWord />
+        </h1>
         <Link href="/budgets" aria-label="Alertes" className="press relative flex h-10 w-10 items-center justify-center rounded-full bg-surface text-ink">
           <Bell size={20} />
           {(alerts.length > 0 || inRed.length > 0) && <span className="breathe absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-peche ring-2 ring-surface" />}

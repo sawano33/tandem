@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { IS_DEMO, DEMO_E, DEMO_G, setDemoUser } from "@/lib/demo";
-import { Wordmark } from "@/components/Logo";
+import { LogoLoop } from "@/components/Logo";
 import { cx } from "@/components/ui";
 import { ArrowRight, Check } from "lucide-react";
 
@@ -61,8 +61,7 @@ function Login() {
       <main className="pt-safe pb-safe mx-auto flex min-h-dvh max-w-md flex-col px-6">
         {/* Marque */}
         <div className="stagger flex flex-1 flex-col items-center justify-center pt-10 text-center">
-          <Wordmark height={56} />
-          <p className="font-display mt-4 text-[21px] font-medium italic text-ink/85">Deux vies. Un équilibre.</p>
+          <LogoLoop size={46} withWord />
 
           {/* Choix du profil */}
           <p className="mt-14 text-[14px] font-medium text-muted">Qui se connecte ?</p>
