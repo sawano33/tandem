@@ -33,8 +33,8 @@ export function buildDemo() {
     split_settings: { mode: "equal_rate", incomes: { [DEMO_G]: 200600, [DEMO_E]: 100600 } },
   };
   const profiles: Profile[] = [
-    { id: DEMO_G, first_name: "Guillaume", avatar_url: null, avatar_emoji: null, color: "#7DB0F7" },
-    { id: DEMO_E, first_name: "Emma", avatar_url: null, avatar_emoji: null, color: "#F5A3C7" },
+    { id: DEMO_G, first_name: "Guillaume", avatar_url: null, avatar_emoji: null, color: "#C5B6F2" },
+    { id: DEMO_E, first_name: "Emma", avatar_url: null, avatar_emoji: null, color: "#FFAE97" },
   ];
   const members: Member[] = [
     { household_id: H, user_id: DEMO_G, role: "owner", joined_at: "2026-01-01T10:00:00Z" },
@@ -45,22 +45,22 @@ export function buildDemo() {
     id: id(), household_id: H, name, icon, color, kind, is_system: true, archived: false, sort,
   });
   const categories = [
-    cat("Courses", "shopping-cart", "#7FB89A", "expense", 1),
-    cat("Restaurants", "utensils", "#FF9A80", "expense", 2),
-    cat("Logement", "house", "#8B7FD1", "expense", 3),
-    cat("Crédits", "credit-card", "#5FA8CF", "expense", 4),
-    cat("Transport", "car", "#E8B04B", "expense", 5),
-    cat("Bébé", "baby", "#EE97B9", "expense", 6),
-    cat("Santé", "heart-pulse", "#E06C75", "expense", 7),
-    cat("Shopping", "shopping-bag", "#B49CF0", "expense", 8),
-    cat("Loisirs", "party-popper", "#6FC2B4", "expense", 9),
-    cat("Abonnements", "repeat", "#9C8FE0", "expense", 10),
-    cat("Impôts", "landmark", "#7D7A8C", "expense", 11),
-    cat("Autres", "ellipsis", "#ABA4BF", "expense", 12),
-    cat("Salaire", "briefcase", "#5FB383", "income", 1),
-    cat("Remboursement", "rotate-ccw", "#5FA8CF", "income", 2),
-    cat("Autres revenus", "sparkles", "#E8B04B", "income", 3),
-    cat("Épargne", "piggy-bank", "#C5B6F2", "saving", 1),
+    cat("Courses", "shopping-cart", "#FFAE97", "expense", 1),
+    cat("Restaurants", "utensils", "#FF8A70", "expense", 2),
+    cat("Logement", "house", "#C5B6F2", "expense", 3),
+    cat("Crédits", "credit-card", "#9583E0", "expense", 4),
+    cat("Transport", "car", "#FFD0BF", "expense", 5),
+    cat("Bébé", "baby", "#F3A9C8", "expense", 6),
+    cat("Santé", "heart-pulse", "#E87F95", "expense", 7),
+    cat("Shopping", "shopping-bag", "#E1D6FB", "expense", 8),
+    cat("Loisirs", "party-popper", "#B49CF0", "expense", 9),
+    cat("Abonnements", "repeat", "#7563C4", "expense", 10),
+    cat("Impôts", "landmark", "#8E84AE", "expense", 11),
+    cat("Autres", "ellipsis", "#6A5F92", "expense", 12),
+    cat("Salaire", "briefcase", "#8FDCB8", "income", 1),
+    cat("Remboursement", "rotate-ccw", "#C5B6F2", "income", 2),
+    cat("Autres revenus", "sparkles", "#FFD0BF", "income", 3),
+    cat("Épargne", "piggy-bank", "#F4EFF8", "saving", 1),
   ];
   const C = Object.fromEntries(categories.map((c) => [c.name, c.id]));
 
@@ -69,8 +69,8 @@ export function buildDemo() {
     is_private: false, archived: false, sort, balance_cents: 0, manual_value_cents: manual, value_updated_at: manual ? new Date().toISOString() : null,
   });
   const accounts = [
-    acc("Trade Republic Guillaume", "epargne", DEMO_G, 0, "landmark", "#7DB0F7", 1),
-    acc("Trade Republic Emma", "epargne", DEMO_E, 0, "landmark", "#F5A3C7", 2, 135000),
+    acc("Trade Republic Guillaume", "epargne", DEMO_G, 0, "landmark", "#C5B6F2", 1),
+    acc("Trade Republic Emma", "epargne", DEMO_E, 0, "landmark", "#FFAE97", 2, 135000),
   ];
   const [aTRG, aTRE] = accounts.map((a) => a.id);
 
@@ -167,9 +167,9 @@ export function buildDemo() {
     id: id(), household_id: H, name, icon, color, target_cents: target, target_date: date, owner_id: owner, account_id: null, archived: false, created_at: "2026-01-01T00:00:00Z",
   });
   const savings_goals = [
-    goal("Arrivée du bébé", "baby", "#EE97B9", 300000, `${now.getFullYear() + 1}-04-01`, null),
-    goal("Vacances", "plane", "#5FA8CF", 200000, `${now.getFullYear() + 1}-07-01`, null),
-    goal("Tesla", "car", "#8B7FD1", 4500000, null, DEMO_G),
+    goal("Arrivée du bébé", "baby", "#F3A9C8", 300000, `${now.getFullYear() + 1}-04-01`, null),
+    goal("Vacances", "plane", "#FFD0BF", 200000, `${now.getFullYear() + 1}-07-01`, null),
+    goal("Tesla", "car", "#9583E0", 4500000, null, DEMO_G),
   ];
   const savings_contributions: SavingsContribution[] = [];
   savings_goals.forEach((g, gi) => {

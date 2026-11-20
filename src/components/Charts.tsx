@@ -159,7 +159,7 @@ export function Pie({
             >
               <path d={d} fill={s.color} stroke="var(--surface)" strokeWidth={2} strokeLinejoin="round" />
               {share >= 0.07 && (
-                <text x={lx} y={ly} textAnchor="middle" dominantBaseline="central" className="tabular" fontSize={13} fontWeight={700} fill="#1A1430">
+                <text x={lx} y={ly} textAnchor="middle" dominantBaseline="central" className="tabular" fontSize={13} fontWeight={700} fill={isDark(s.color) ? "#F4EFF8" : "#1F1838"}>
                   {Math.round(share * 100)}%
                 </text>
               )}
@@ -168,4 +168,10 @@ export function Pie({
         })}
     </svg>
   );
+}
+
+function isDark(hex: string) {
+  const n = parseInt(hex.replace("#", ""), 16);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return 0.299 * r + 0.587 * g + 0.114 * b < 140;
 }

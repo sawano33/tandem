@@ -22,8 +22,8 @@ export const ICONS: Record<string, LucideIcon> = {
 export const ICON_NAMES = Object.keys(ICONS);
 
 export const PALETTE = [
-  "#251D40", "#8B7FD1", "#B49CF0", "#C5B6F2", "#FFAE97", "#D98B5F", "#E8B04B",
-  "#7FB89A", "#5FB383", "#5FA8CF", "#EE97B9", "#E06C75", "#7D7A8C", "#ABA4BF",
+  "#FFAE97", "#FF8A70", "#FFD0BF", "#F3A9C8", "#E87F95", "#F4EFF8", "#E1D6FB",
+  "#C5B6F2", "#B49CF0", "#9583E0", "#7563C4", "#8E84AE", "#6A5F92", "#8FDCB8",
 ];
 
 export function Icon({ name, size = 20, className, strokeWidth = 1.8 }: {

@@ -54,7 +54,7 @@ export default function HomePage() {
       id: m.user_id, name: m.profile?.first_name ?? "…", color: m.profile?.color ?? "#C5B6F2", profile: m.profile,
       cents: monthTx.filter((t) => t.kind === "expense" && t.assigned_to === m.user_id).reduce((a, t) => a + t.amount_cents, 0),
     })),
-    { id: "common", name: "Commun", color: "#C5B6F2", profile: undefined, cents: monthTx.filter((t) => t.kind === "expense" && t.assigned_to === null).reduce((a, t) => a + t.amount_cents, 0) },
+    { id: "common", name: "Commun", color: "#F4EFF8", profile: undefined, cents: monthTx.filter((t) => t.kind === "expense" && t.assigned_to === null).reduce((a, t) => a + t.amount_cents, 0) },
   ];
   const topCatFor = (who: string | null) => byCategory(monthTx.filter((t) => t.assigned_to === who), "all", d.categories)[0];
 
@@ -202,7 +202,7 @@ export default function HomePage() {
                 const top = topCatFor(p.id === "common" ? null : p.id);
                 return (
                   <div key={p.id} className="flex items-center gap-3">
-                    {p.profile ? <Avatar profile={p.profile} size={34} /> : <span className="bg-grad-lav h-[34px] w-[34px] shrink-0 rounded-full" />}
+                    {p.profile ? <Avatar profile={p.profile} size={34} /> : <span className="h-[34px] w-[34px] shrink-0 rounded-full bg-lilas" />}
                     <span className="min-w-0 flex-1">
                       <span className="block text-[15px] font-medium text-ink">{p.name}</span>
                       <span className="block truncate text-[12px] text-muted">{top ? `Surtout ${top.name.toLowerCase()} · ${moneyShort(top.cents)}` : "Rien ce mois-ci"}</span>

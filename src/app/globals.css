@@ -2,29 +2,18 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-:root {
-  --bg: #f4eff8;
-  --surface: #ffffff;
-  --surface-2: #efe8f7;
-  --ink: #251d40;
-  --muted: #7a7090;
-  --line: #e7dff0;
-  --strong: #251d40;
-  --on-strong: #ffffff;
-  --track: #ebe4f4;
-  color-scheme: light;
-}
-
+:root,
 .dark {
-  --bg: #120e1f;
-  --surface: #1d1730;
-  --surface-2: #282041;
-  --ink: #f4eff8;
-  --muted: #a69cbd;
-  --line: #2e2647;
-  --strong: #c5b6f2;
+  /* Thème sombre TANDEM, construit sur la palette de marque */
+  --bg: #1f1838;          /* aubergine profond */
+  --surface: #2b2250;     /* aubergine éclairci */
+  --surface-2: #372c63;
+  --ink: #f4eff8;         /* lilas clair */
+  --muted: #b3a8d3;       /* lavande atténuée */
+  --line: #3d3268;
+  --strong: #c5b6f2;      /* lavande */
   --on-strong: #251d40;
-  --track: #2c2446;
+  --track: #3a2f66;
   color-scheme: dark;
 }
 
@@ -33,9 +22,9 @@
   --color-peche: #ffae97;
   --color-lavande: #c5b6f2;
   --color-lilas: #f4eff8;
-  --color-ok: #5fb383;
-  --color-warn: #e8a13c;
-  --color-over: #e0606d;
+  --color-ok: #8fdcb8;
+  --color-warn: #ffc78a;
+  --color-over: #ff7d8c;
 
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -71,10 +60,11 @@ body {
   }
 }
 
+/* Fraunces comme sur la planche : optique « texte » (pleine, peu contrastée), graisse 600 */
 .font-display {
   font-family: var(--font-display);
-  font-optical-sizing: auto;
-  letter-spacing: -0.01em;
+  font-variation-settings: "opsz" 14;
+  letter-spacing: -0.015em;
 }
 
 .tabular {
@@ -147,35 +137,28 @@ body {
   }
 }
 
-/* ---------- Logo animé en boucle : les deux arcs se tracent puis s'effacent ---------- */
-@keyframes logo-draw {
-  0% { stroke-dasharray: 0 100; stroke-dashoffset: 0; }
-  35% { stroke-dasharray: 100 100; stroke-dashoffset: 0; }
-  65% { stroke-dasharray: 100 100; stroke-dashoffset: 0; }
-  100% { stroke-dasharray: 100 100; stroke-dashoffset: -100; }
+/* ---------- Logo animé en boucle : la boucle pêche se dessine de bas en haut, puis repart ---------- */
+@keyframes logo-swoosh {
+  0% { clip-path: inset(100% 0 0 0); }
+  38% { clip-path: inset(0 0 0 0); }
+  72% { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(0 0 100% 0); }
 }
-.logo-loop-a { animation: logo-draw 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
-.logo-loop-b { animation: logo-draw 3.2s cubic-bezier(0.65, 0, 0.35, 1) 0.18s infinite; }
+.logo-swoosh { animation: logo-swoosh 3.4s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .logo-loop-a, .logo-loop-b { animation: none; }
+  .logo-swoosh { animation: none; }
 }
 
 /* ---------- Dégradés TANDEM ---------- */
-.bg-grad-hero { background: linear-gradient(135deg, #ffc2ae 0%, #ffae97 38%, #e9a6d8 72%, #c5b6f2 100%); }
-.bg-grad-night { background: linear-gradient(150deg, #3a2d63 0%, #251d40 55%, #1a1430 100%); }
-.bg-grad-cta { background: linear-gradient(135deg, #ff9f86 0%, #ffae97 45%, #d8b7f0 100%); }
+.bg-grad-hero { background: linear-gradient(135deg, #ffbfa9 0%, #ffae97 40%, #e3b2e6 75%, #c5b6f2 100%); }
+.bg-grad-night { background: linear-gradient(150deg, #3b2f6b 0%, #2b2250 50%, #251d40 100%); }
+.bg-grad-cta { background: linear-gradient(135deg, #ffae97 0%, #f3b0c4 50%, #c5b6f2 100%); }
 .bg-grad-lav { background: linear-gradient(135deg, #e6dcff 0%, #c5b6f2 100%); }
-.bg-grad-page {
-  background:
-    radial-gradient(120% 60% at 100% 0%, rgba(197, 182, 242, 0.45) 0%, rgba(197, 182, 242, 0) 60%),
-    radial-gradient(90% 50% at 0% 0%, rgba(255, 174, 151, 0.28) 0%, rgba(255, 174, 151, 0) 55%),
-    var(--bg);
-  background-attachment: fixed;
-}
+.bg-grad-page,
 .dark .bg-grad-page {
   background:
-    radial-gradient(120% 60% at 100% 0%, rgba(110, 88, 190, 0.35) 0%, rgba(110, 88, 190, 0) 60%),
-    radial-gradient(90% 50% at 0% 0%, rgba(255, 142, 115, 0.14) 0%, rgba(255, 142, 115, 0) 55%),
+    radial-gradient(110% 55% at 100% 0%, rgba(197, 182, 242, 0.22) 0%, rgba(197, 182, 242, 0) 60%),
+    radial-gradient(90% 45% at 0% 0%, rgba(255, 174, 151, 0.14) 0%, rgba(255, 174, 151, 0) 55%),
     var(--bg);
   background-attachment: fixed;
 }

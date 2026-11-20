@@ -271,10 +271,10 @@ export function usageSlices(params: {
   const cats = byCategory(monthTx, scope, categories).map((c) => ({ ...c, kind: "expense" as const }));
   const spent = cats.reduce((s, c) => s + c.cents, 0);
   const slices: { id: string; name: string; color: string; icon: string; cents: number; kind: "expense" | "saving" | "pending" | "left" }[] = [...cats];
-  if (saving > 0) slices.push({ id: "saving", name: "Épargne", color: "#C5B6F2", icon: "piggy-bank", cents: saving, kind: "saving" });
-  if (pendingCharges > 0) slices.push({ id: "pending", name: "Charges à venir", color: "#5B4F86", icon: "calendar-clock", cents: pendingCharges, kind: "pending" });
+  if (saving > 0) slices.push({ id: "saving", name: "Épargne", color: "#F4EFF8", icon: "piggy-bank", cents: saving, kind: "saving" });
+  if (pendingCharges > 0) slices.push({ id: "pending", name: "Charges à venir", color: "#5A4C8E", icon: "calendar-clock", cents: pendingCharges, kind: "pending" });
   const left = income - spent - saving - pendingCharges;
-  if (left > 0) slices.push({ id: "left", name: "Reste disponible", color: "#3A3354", icon: "wallet", cents: left, kind: "left" });
+  if (left > 0) slices.push({ id: "left", name: "Reste disponible", color: "#433873", icon: "wallet", cents: left, kind: "left" });
   const base = Math.max(income, spent + saving + pendingCharges);
   return { slices: slices.map((s) => ({ ...s, share: base ? s.cents / base : 0 })), base, left, overspent: left < 0 ? -left : 0 };
 }

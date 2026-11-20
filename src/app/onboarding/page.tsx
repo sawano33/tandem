@@ -6,7 +6,7 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import { Wordmark } from "@/components/Logo";
 import { Button, Field, Segmented, inputClass } from "@/components/ui";
 
-const COLORS: Record<string, string> = { guillaume: "#7DB0F7", emma: "#F5A3C7" };
+const COLORS: Record<string, string> = { guillaume: "#C5B6F2", emma: "#FFAE97" };
 
 export default function OnboardingPage() {
   const supabase = supabaseBrowser();
@@ -50,7 +50,7 @@ export default function OnboardingPage() {
     <div className="bg-grad-page min-h-dvh">
       <main className="pt-safe pb-safe mx-auto flex min-h-dvh max-w-md flex-col px-6">
         <div className="pt-10">
-          <Wordmark />
+          <Wordmark height={44} />
           <h1 className="font-display mt-6 text-[30px] font-semibold leading-tight text-ink">Bienvenue dans TANDEM</h1>
           <p className="mt-1 text-muted">Créez votre espace à deux, ou rejoignez celui de votre partenaire.</p>
         </div>

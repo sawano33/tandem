@@ -6,7 +6,7 @@ import { useData } from "@/lib/store";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { Avatar, Button, Card, Field, Page, PageHeader, cx, inputClass } from "@/components/ui";
 
-const COLORS = ["#7DB0F7", "#F5A3C7", "#C5B6F2", "#FFAE97", "#7FB89A", "#E8B04B", "#5FA8CF", "#8B7FD1"];
+const COLORS = ["#C5B6F2", "#FFAE97", "#F3A9C8", "#E1D6FB", "#9583E0", "#FF8A70", "#FFD0BF", "#8FDCB8"];
 const EMOJIS = ["", "🦊", "🐻", "🐱", "🐶", "🐺", "🌸", "🌊", "⚡️", "🍑", "🌙", "☀️"];
 
 export default function MoiPage() {

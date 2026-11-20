@@ -13,10 +13,11 @@ execSync(
 );
 execSync("npx @tailwindcss/cli -i src/app/globals.css -o .demo-tmp/app.css --minify", { stdio: "inherit" });
 
-const face = (family, file) =>
-  `@font-face{font-family:'${family}';font-display:swap;font-weight:100 900;src:url(data:font/woff2;base64,${readFileSync(file).toString("base64")}) format('woff2-variations');}`;
+const face = (family, file, style = "normal") =>
+  `@font-face{font-family:'${family}';font-style:${style};font-display:swap;font-weight:100 900;src:url(data:font/woff2;base64,${readFileSync(file).toString("base64")}) format('woff2-variations');}`;
 const css =
-  face("Fraunces Variable", "node_modules/@fontsource-variable/fraunces/files/fraunces-latin-wght-normal.woff2") +
+  face("Fraunces Variable", "node_modules/@fontsource-variable/fraunces/files/fraunces-latin-opsz-normal.woff2") +
+  face("Fraunces Variable", "node_modules/@fontsource-variable/fraunces/files/fraunces-latin-opsz-italic.woff2", "italic") +
   face("Inter Variable", "node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2") +
   readFileSync(".demo-tmp/app.css", "utf8");
 const js = readFileSync(".demo-tmp/app.js", "utf8").replaceAll("</script", "<\\/script");
@@ -24,6 +25,6 @@ const icon = readFileSync("public/icons/icon-192.png").toString("base64");
 
 writeFileSync(
   "tandem-demo.html",
-  `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><meta name="theme-color" content="#F4EFF8"><link rel="icon" href="data:image/png;base64,${icon}"><title>TANDEM — démo</title><style>${css}</style></head><body><div id="root"></div><script>${js}</script></body></html>`,
+  `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1F1838"><link rel="icon" href="data:image/png;base64,${icon}"><title>TANDEM — démo</title><style>${css}</style></head><body><div id="root"></div><script>${js}</script></body></html>`,
 );
 console.log("tandem-demo.html prêt");

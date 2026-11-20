@@ -58,7 +58,7 @@ export default function StatsPage() {
       expense: totals(txs, m.user_id).expense, income: totals(txs, m.user_id).income,
     })),
     {
-      id: "common", name: "Commun", color: "#251D40", profile: undefined,
+      id: "common", name: "Commun", color: "#F4EFF8", profile: undefined,
       expense: txs.filter((t) => t.kind === "expense" && t.assigned_to === null).reduce((s, t) => s + t.amount_cents, 0),
       income: txs.filter((t) => t.kind === "income" && t.assigned_to === null).reduce((s, t) => s + t.amount_cents, 0),
     },

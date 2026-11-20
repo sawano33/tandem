@@ -9,8 +9,8 @@ import { Wordmark } from "@/components/Logo";
 import { cx } from "@/components/ui";
 
 const PEOPLE = [
-  { key: "G", name: "Guillaume", email: process.env.NEXT_PUBLIC_EMAIL_GUILLAUME, demoId: DEMO_G, grad: "linear-gradient(140deg,#A9CBFF 0%,#7DB0F7 55%,#8B7FD1 100%)" },
-  { key: "E", name: "Emma", email: process.env.NEXT_PUBLIC_EMAIL_EMMA, demoId: DEMO_E, grad: "linear-gradient(140deg,#FFC9DD 0%,#F5A3C7 55%,#FFAE97 100%)" },
+  { key: "G", name: "Guillaume", email: process.env.NEXT_PUBLIC_EMAIL_GUILLAUME, demoId: DEMO_G, grad: "linear-gradient(140deg,#E1D6FB 0%,#C5B6F2 55%,#9583E0 100%)" },
+  { key: "E", name: "Emma", email: process.env.NEXT_PUBLIC_EMAIL_EMMA, demoId: DEMO_E, grad: "linear-gradient(140deg,#FFD0BF 0%,#FFAE97 55%,#F3A9C8 100%)" },
 ];
 
 export default function LoginPage() {
@@ -64,12 +64,8 @@ function Login() {
     <div className="bg-grad-page min-h-dvh">
       <main className="pt-safe pb-safe mx-auto flex min-h-dvh max-w-md flex-col px-6">
         <div className="pt-10">
-          <Wordmark />
-          <p className="font-display mt-6 text-[34px] font-semibold leading-[1.1] text-ink">
-            Deux vies.
-            <br />
-            <span className="text-grad italic">Un équilibre.</span>
-          </p>
+          <Wordmark height={52} />
+          <p className="font-display mt-5 text-[30px] font-medium italic leading-[1.1] text-ink">Deux vies. Un équilibre.</p>
           <p className="mt-2 text-[15px] text-muted">Qui se connecte ?</p>
         </div>
 
@@ -133,7 +129,7 @@ function Login() {
           <button
             onClick={signIn}
             disabled={!who || loading || (!IS_DEMO && code.length !== 6)}
-            className="press bg-grad-night h-14 w-full rounded-2xl text-[17px] font-semibold text-white disabled:opacity-35"
+            className="press bg-grad-cta h-14 w-full rounded-2xl text-[17px] font-semibold text-aubergine disabled:opacity-35"
           >
             {loading ? "Connexion…" : who ? `Se connecter en tant que ${who.name}` : "Se connecter"}
           </button>

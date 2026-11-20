@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import "@fontsource-variable/fraunces";
+import "@fontsource-variable/fraunces/opsz.css";
+import "@fontsource-variable/fraunces/opsz-italic.css";
 import "@fontsource-variable/inter";
 import "./globals.css";
 import { ServiceWorker } from "@/components/ServiceWorker";
@@ -25,7 +26,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
-  themeColor: "#120E1F",
+  themeColor: "#1F1838",
   colorScheme: "dark",
 };
 

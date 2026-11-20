@@ -334,22 +334,22 @@ create or replace function public.seed_household_defaults(hid uuid)
 returns void language plpgsql security definer set search_path = '' as $$
 begin
   insert into public.categories (household_id, name, icon, color, kind, is_system, sort) values
-    (hid, 'Courses',      'shopping-cart', '#7FB89A', 'expense', true, 1),  -- animaux compris
-    (hid, 'Restaurants',  'utensils',      '#FFAE97', 'expense', true, 2),
-    (hid, 'Logement',     'house',         '#8B7FD1', 'expense', true, 3),
-    (hid, 'Crédits',      'credit-card',   '#5FA8CF', 'expense', true, 4),
-    (hid, 'Transport',    'car',           '#E8B04B', 'expense', true, 5),
-    (hid, 'Bébé',         'baby',          '#EE97B9', 'expense', true, 6),
-    (hid, 'Santé',        'heart-pulse',   '#E06C75', 'expense', true, 7),
-    (hid, 'Shopping',     'shopping-bag',  '#B49CF0', 'expense', true, 8),
-    (hid, 'Loisirs',      'party-popper',  '#6FC2B4', 'expense', true, 9),
-    (hid, 'Abonnements',  'repeat',        '#9C8FE0', 'expense', true, 10),
-    (hid, 'Impôts',       'landmark',      '#7D7A8C', 'expense', true, 11),
-    (hid, 'Autres',       'ellipsis',      '#ABA4BF', 'expense', true, 12),
-    (hid, 'Épargne',      'piggy-bank',    '#C5B6F2', 'saving',  true, 1),
-    (hid, 'Salaire',        'briefcase',   '#5FB383', 'income', true, 1),
-    (hid, 'Remboursement',  'rotate-ccw',  '#5FA8CF', 'income', true, 2),
-    (hid, 'Autres revenus', 'sparkles',    '#E8B04B', 'income', true, 3)
+    (hid, 'Courses',      'shopping-cart', '#FFAE97', 'expense', true, 1),  -- animaux compris
+    (hid, 'Restaurants',  'utensils',      '#FF8A70', 'expense', true, 2),
+    (hid, 'Logement',     'house',         '#C5B6F2', 'expense', true, 3),
+    (hid, 'Crédits',      'credit-card',   '#9583E0', 'expense', true, 4),
+    (hid, 'Transport',    'car',           '#FFD0BF', 'expense', true, 5),
+    (hid, 'Bébé',         'baby',          '#F3A9C8', 'expense', true, 6),
+    (hid, 'Santé',        'heart-pulse',   '#E87F95', 'expense', true, 7),
+    (hid, 'Shopping',     'shopping-bag',  '#E1D6FB', 'expense', true, 8),
+    (hid, 'Loisirs',      'party-popper',  '#B49CF0', 'expense', true, 9),
+    (hid, 'Abonnements',  'repeat',        '#7563C4', 'expense', true, 10),
+    (hid, 'Impôts',       'landmark',      '#8E84AE', 'expense', true, 11),
+    (hid, 'Autres',       'ellipsis',      '#6A5F92', 'expense', true, 12),
+    (hid, 'Épargne',      'piggy-bank',    '#F4EFF8', 'saving',  true, 1),
+    (hid, 'Salaire',        'briefcase',   '#8FDCB8', 'income', true, 1),
+    (hid, 'Remboursement',  'rotate-ccw',  '#C5B6F2', 'income', true, 2),
+    (hid, 'Autres revenus', 'sparkles',    '#FFD0BF', 'income', true, 3)
   on conflict do nothing;
 end $$;
 

@@ -8,7 +8,7 @@ import { Avatar, Card, ListRow, Page, PageHeader } from "@/components/ui";
 
 
 const Bubble = ({ children, bg }: { children: ReactNode; bg: string }) => (
-  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white" style={{ background: bg }}>
+  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-aubergine" style={{ background: bg }}>
     {children}
   </span>
 );
@@ -44,18 +44,18 @@ export default function ProfilPage() {
       </Card>
 
       <Card className="mt-4 py-1.5">
-        <ListRow href="/profil/moi" left={<Bubble bg="#8B7FD1"><UserRound size={18} /></Bubble>} title="Prénom et avatar" right={chev} />
-        <ListRow href="/profil/categories" left={<Bubble bg="#7FB89A"><Shapes size={18} /></Bubble>} title="Catégories" right={chev} />
-        <ListRow href="/profil/charges" left={<Bubble bg="#FF9A80"><Repeat size={18} /></Bubble>} title="Charges fixes" subtitle={`${d.recurring_expenses.filter((r) => r.active).length} prélèvements`} right={chev} />
-        <ListRow href="/profil/partenaire" left={<Bubble bg="#F5A3C7"><Users size={18} /></Bubble>} title="Partenaire" subtitle={d.partner ? d.partner.first_name : "Inviter"} right={chev} />
-        <ListRow href="/profil/repartition" left={<Bubble bg="#6FC2B4"><Scale size={18} /></Bubble>} title="Répartition à deux" subtitle="Qui paie combien du commun" right={chev} />
-        <ListRow href="/profil/notifications" left={<Bubble bg="#E8B04B"><Bell size={18} /></Bubble>} title="Notifications" right={chev} />
+        <ListRow href="/profil/moi" left={<Bubble bg="#9583E0"><UserRound size={18} /></Bubble>} title="Prénom et avatar" right={chev} />
+        <ListRow href="/profil/categories" left={<Bubble bg="#C5B6F2"><Shapes size={18} /></Bubble>} title="Catégories" right={chev} />
+        <ListRow href="/profil/charges" left={<Bubble bg="#FF8A70"><Repeat size={18} /></Bubble>} title="Charges fixes" subtitle={`${d.recurring_expenses.filter((r) => r.active).length} prélèvements`} right={chev} />
+        <ListRow href="/profil/partenaire" left={<Bubble bg="#F3A9C8"><Users size={18} /></Bubble>} title="Partenaire" subtitle={d.partner ? d.partner.first_name : "Inviter"} right={chev} />
+        <ListRow href="/profil/repartition" left={<Bubble bg="#B49CF0"><Scale size={18} /></Bubble>} title="Répartition à deux" subtitle="Qui paie combien du commun" right={chev} />
+        <ListRow href="/profil/notifications" left={<Bubble bg="#FFAE97"><Bell size={18} /></Bubble>} title="Notifications" right={chev} />
       </Card>
 
 
       <Card className="mt-4 py-1.5">
-        <ListRow onClick={exportCSV} left={<Bubble bg="#5FA8CF"><Download size={18} /></Bubble>} title="Exporter en CSV" subtitle="Tout l'historique des opérations" />
-        <ListRow onClick={d.signOut} left={<Bubble bg="#E06C75"><LogOut size={18} /></Bubble>} title={<span className="text-over">Se déconnecter</span>} />
+        <ListRow onClick={exportCSV} left={<Bubble bg="#7563C4"><Download size={18} /></Bubble>} title="Exporter en CSV" subtitle="Tout l'historique des opérations" />
+        <ListRow onClick={d.signOut} left={<Bubble bg="#E87F95"><LogOut size={18} /></Bubble>} title={<span className="text-over">Se déconnecter</span>} />
       </Card>
 
       <p className="mt-6 text-center text-xs text-muted">TANDEM · Deux vies. Un équilibre.{d.demo && " · Mode démo"}</p>
