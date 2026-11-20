@@ -45,6 +45,13 @@ export function UsageCard({ usage, income, estimated, title = "Où va l'argent" 
         </p>
       )}
 
+      {usage.slices.length === 0 ? (
+        <div className="mt-6 rounded-2xl border border-dashed border-line px-4 py-8 text-center">
+          <p className="text-[15px] font-medium text-ink">Rien à afficher pour l&apos;instant</p>
+          <p className="mt-1 text-[13px] text-muted">Ajoutez vos salaires et vos dépenses avec le bouton + : le camembert se remplit tout seul.</p>
+        </div>
+      ) : (
+      <>
       {/* Camembert */}
       <div className="mt-5 flex justify-center">
         <Pie size={224} slices={usage.slices.map((x) => ({ id: x.id, value: x.cents, color: x.color }))} selected={slice} onSelect={setSlice} />
@@ -82,6 +89,8 @@ export function UsageCard({ usage, income, estimated, title = "Où va l'argent" 
           </li>
         ))}
       </ul>
+      </>
+      )}
     </section>
   );
 }
