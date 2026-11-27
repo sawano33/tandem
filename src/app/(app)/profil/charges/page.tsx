@@ -8,7 +8,7 @@ import { centsToInput, money, monthStart, parseAmount, today } from "@/lib/forma
 import { occurrencesForMonth } from "@/lib/finance";
 import { Icon, IconBubble } from "@/lib/icons";
 import type { Frequency, RecurringExpense } from "@/lib/types";
-import { Button, Card, Chip, EmptyState, Field, Page, PageHeader, Sheet, Toggle, inputClass } from "@/components/ui";
+import { Avatar, Button, Card, Chip, EmptyState, Field, Page, PageHeader, Sheet, Toggle, inputClass } from "@/components/ui";
 
 const FREQ: { value: Frequency; label: string; perMonth: number }[] = [
   { value: "monthly", label: "Mensuelle", perMonth: 1 },
@@ -48,8 +48,23 @@ export default function ChargesPage() {
       {list.length === 0 ? (
         <EmptyState icon={<CalendarClock size={24} />} title="Aucune charge" text="Loyer, électricité, assurances… Elles alimentent le reste à vivre." action={<Button onClick={() => setEdit("new")}>Ajouter une charge</Button>} />
       ) : (
-        <Card className="mt-4 py-1">
-          {list.map((r) => {
+        <>
+          {[
+            ...d.members.map((m) => ({ id: m.user_id as string | null, name: m.profile?.first_name ?? "…", profile: m.profile })),
+            { id: null, name: "À attribuer", profile: undefined },
+          ].map((g) => {
+            const items = list.filter((r) => r.assigned_to === g.id);
+            if (!items.length) return null;
+            const total = items.filter((r) => r.active).reduce((s, r) => s + r.amount_cents * (FREQ.find((f) => f.value === r.frequency)?.perMonth ?? 1), 0);
+            return (
+              <section key={g.id ?? "none"} className="mt-5">
+                <div className="mb-2 flex items-center gap-2 px-1">
+                  {g.profile && <Avatar profile={g.profile} size={22} />}
+                  <span className="flex-1 text-[14px] font-semibold text-ink">{g.name}</span>
+                  <span className="font-num tabular text-[13px] text-muted">{money(Math.round(total))} / mois</span>
+                </div>
+                <Card className="py-1">
+                  {items.map((r) => {
             const cat = d.categories.find((c) => c.id === r.category_id);
             const o = occ.find((x) => x.recurring.id === r.id);
             return (
@@ -58,7 +73,7 @@ export default function ChargesPage() {
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[15px] font-medium text-ink">{r.label}</span>
                   <span className="block truncate text-[13px] text-muted">
-                    {FREQ.find((f) => f.value === r.frequency)?.label} · le {r.day_of_month} · {d.nameOf(r.assigned_to)}
+                    {FREQ.find((f) => f.value === r.frequency)?.label} · le {r.day_of_month}
                   </span>
                 </span>
                 <span className="text-right">
@@ -67,8 +82,12 @@ export default function ChargesPage() {
                 </span>
               </button>
             );
+                  })}
+                </Card>
+              </section>
+            );
           })}
-        </Card>
+        </>
       )}
       <p className="mt-6 px-2 text-center text-xs text-muted">
         Quand vous saisissez une dépense qui correspond à une charge prévue, TANDEM propose de la rattacher pour éviter de la compter deux fois.
@@ -97,14 +116,14 @@ function ChargeSheet({ item, onClose }: { item: RecurringExpense | "new" | null;
     setFreq(r?.frequency ?? "monthly");
     setDay(String(r?.day_of_month ?? 5));
     setCat(r?.category_id ?? d.categories.find((c) => c.name === "Logement")?.id ?? null);
-    setWho(r ? r.assigned_to : null);
+    setWho(r?.assigned_to ?? d.user?.id ?? null);
     setActive(r?.active ?? true);
   }
   const cents = parseAmount(amount);
   const dayN = Math.min(31, Math.max(1, Number(day) || 1));
 
   async function save() {
-    if (!cents || !label.trim()) return;
+    if (!cents || !label.trim() || !who) return;
     const row = {
       label: label.trim(), amount_cents: cents, frequency: freq, day_of_month: dayN, category_id: cat, account_id: null,
       assigned_to: who, active, ...(r ? {} : { start_date: today().slice(0, 8) + "01" }),
@@ -130,7 +149,7 @@ function ChargeSheet({ item, onClose }: { item: RecurringExpense | "new" | null;
       footer={
         <div className="flex gap-2">
           {r && <Button variant="danger" className="w-auto" onClick={del}>Supprimer</Button>}
-          <Button onClick={save} disabled={!cents || !label.trim()}>Enregistrer</Button>
+          <Button onClick={save} disabled={!cents || !label.trim() || !who}>Enregistrer</Button>
         </div>
       }
     >
@@ -172,12 +191,11 @@ function ChargeSheet({ item, onClose }: { item: RecurringExpense | "new" | null;
           </div>
         </div>
         <div>
-          <p className="mb-2 px-1 text-[13px] font-medium text-muted">Pour</p>
+          <p className="mb-2 px-1 text-[13px] font-medium text-muted">Payée par</p>
           <div className="flex flex-wrap gap-2">
             {d.members.map((m) => (
               <Chip key={m.user_id} active={who === m.user_id} onClick={() => setWho(m.user_id)}>{m.profile?.first_name}</Chip>
             ))}
-            <Chip active={who === null} onClick={() => setWho(null)}>Commun</Chip>
           </div>
         </div>
         {r && (

@@ -89,15 +89,15 @@ export function buildDemo() {
   const R = (label: string, amount: number, cat: string, _account: null, frequency: RecurringExpense["frequency"], day: number, who: string | null) =>
     ({ label, amount_cents: amount, category_id: C[cat], account_id: null, frequency, day_of_month: day, start_date: "2025-01-01", end_date: null, assigned_to: who, active: true });
   const recurring_expenses: RecurringExpense[] = [
-    R("Loyer", 105000, "Logement", null, "monthly", 5, null),
-    R("Électricité", 8400, "Logement", null, "monthly", 12, null),
-    R("Eau", 6500, "Logement", null, "quarterly", 18, null),
-    R("Assurance habitation", 2890, "Logement", null, "monthly", 8, null),
+    R("Loyer", 105000, "Logement", null, "monthly", 5, DEMO_G),
+    R("Électricité", 8400, "Logement", null, "monthly", 12, DEMO_E),
+    R("Eau", 6500, "Logement", null, "quarterly", 18, DEMO_E),
+    R("Assurance habitation", 2890, "Logement", null, "monthly", 8, DEMO_G),
     R("Crédit auto", 32000, "Crédits", null, "monthly", 10, DEMO_G),
-    R("Internet", 3999, "Abonnements", null, "monthly", 15, null),
+    R("Internet", 3999, "Abonnements", null, "monthly", 15, DEMO_G),
     R("Forfait Guillaume", 1999, "Abonnements", null, "monthly", 22, DEMO_G),
     R("Forfait Emma", 1599, "Abonnements", null, "monthly", 24, DEMO_E),
-    R("Netflix", 1349, "Abonnements", null, "monthly", 27, null),
+    R("Netflix", 1349, "Abonnements", null, "monthly", 27, DEMO_E),
   ].map((r) => ({ ...r, id: id(), household_id: H }));
 
   const transactions: Transaction[] = [];
