@@ -98,9 +98,11 @@ export default function HomePage() {
             fromBank = true;
           }
         }
-        const showAfter = !s.isPast && afterCharges && s.pendingCharges > 0;
-        const shown = s.isPast ? s.resteAVivre : showAfter ? dispo - s.pendingCharges : dispo;
-        const engaged = s.expense + s.saving + (showAfter ? s.pendingCharges : 0);
+        // « Après charges » : toutes les charges fixes du mois pas encore cochées, quelle que soit leur date
+        const allPending = s.occ.filter((o) => o.status === "pending").reduce((a, o) => a + o.amount_cents, 0);
+        const showAfter = !s.isPast && afterCharges && allPending > 0;
+        const shown = s.isPast ? s.resteAVivre : showAfter ? dispo - allPending : dispo;
+        const engaged = s.expense + s.saving + (showAfter ? allPending : 0);
         const ratio = s.income ? engaged / s.income : 0;
         return (
           <section className="animate-rise mt-4 rounded-[26px] border border-line bg-surface p-5">
@@ -115,7 +117,7 @@ export default function HomePage() {
               )}
             </div>
             <button
-              onClick={() => !s.isPast && s.pendingCharges > 0 && setAfterCharges((v) => !v)}
+              onClick={() => !s.isPast && allPending > 0 && setAfterCharges((v) => !v)}
               aria-label={showAfter ? "Voir le disponible" : "Voir le reste après les charges à venir"}
               className="block text-left"
             >
@@ -123,7 +125,7 @@ export default function HomePage() {
                 {money(shown)}
               </p>
             </button>
-            {!s.isPast && s.pendingCharges > 0 && (
+            {!s.isPast && allPending > 0 && (
               <div className="mt-2 flex gap-1 rounded-full bg-surface-2 p-1 text-[12.5px] font-semibold">
                 {[
                   [false, "Maintenant"],
@@ -148,7 +150,7 @@ export default function HomePage() {
             <p className="mt-1.5 text-[12px] text-muted">{Math.round(ratio * 100)} % des revenus déjà engagés</p>
             {explain && (
               <p className="animate-fade mt-3 rounded-2xl bg-surface-2 p-3 text-[12.5px] leading-snug text-muted">
-                {fromBank ? "Solde de la banque (recalé), qui bouge avec chaque saisie" : <>Revenus{s.estimated ? " (salaire prévu)" : ""} − dépenses − épargne</>}{showAfter && " − charges fixes pas encore passées (à cocher quand elles passent)"}.
+                {fromBank ? "Solde de la banque (recalé), qui bouge avec chaque saisie" : <>Revenus{s.estimated ? " (salaire prévu)" : ""} − dépenses − épargne</>}{showAfter && " − toutes les charges fixes du mois pas encore cochées"}.
               </p>
             )}
             <div className="mt-4 grid grid-cols-3 gap-2 border-t border-line pt-4">
