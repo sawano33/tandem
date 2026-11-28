@@ -2,10 +2,10 @@
 
 import { confirmAction } from "@/lib/demo";
 import { useState } from "react";
-import { CalendarClock, Plus } from "lucide-react";
+import { CalendarClock, Check, Hand, Plus, Zap } from "lucide-react";
 import { useData } from "@/lib/store";
 import { centsToInput, money, monthStart, parseAmount, today } from "@/lib/format";
-import { occurrencesForMonth } from "@/lib/finance";
+import { occurrencesForMonth, type Occurrence } from "@/lib/finance";
 import { Icon, IconBubble } from "@/lib/icons";
 import type { Frequency, RecurringExpense } from "@/lib/types";
 import { ChargeCheck } from "@/components/ChargeCheck";
@@ -38,13 +38,34 @@ export default function ChargesPage() {
           </button>
         }
       />
-      <Card className="bg-grad-night !p-5 text-white">
-        <p className="text-sm text-white/70">Charges fixes par mois (moyenne)</p>
-        <p className="font-num tabular text-[32px] font-semibold">{money(Math.round(monthly))}</p>
-        <p className="mt-1 text-[13px] text-white/70">
-          Ce mois-ci : {occ.filter((o) => o.status === "paid").length} payées · {occ.filter((o) => o.status === "pending").length} à venir
-        </p>
-      </Card>
+      {(() => {
+        const t = today();
+        const paid = occ.filter((o) => o.status === "paid");
+        const auto = occ.filter((o) => o.status === "pending" && o.recurring.auto_pay !== false && !o.held && o.due_on >= t);
+        const toTick = occ.filter((o) => o.status === "pending" && !auto.includes(o));
+        const sum = (xs: Occurrence[]) => xs.reduce((a, o) => a + o.amount_cents, 0);
+        return (
+          <Card className="!p-5">
+            <div className="flex items-baseline justify-between">
+              <p className="text-[14px] font-medium text-muted">Ce mois-ci</p>
+              <p className="font-num tabular text-[13px] text-muted">{money(Math.round(monthly))} / mois en moyenne</p>
+            </div>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {[
+                { label: "Payées", n: paid.length, cents: sum(paid), icon: <Check size={14} />, c: "text-ok" },
+                { label: "À venir", n: auto.length, cents: sum(auto), icon: <Zap size={14} />, c: "text-lavande" },
+                { label: "À cocher", n: toTick.length, cents: sum(toTick), icon: <Hand size={14} />, c: "text-peche" },
+              ].map((x) => (
+                <div key={x.label} className="rounded-2xl bg-surface-2 p-3">
+                  <p className={`flex items-center gap-1 text-[12px] font-semibold ${x.c}`}>{x.icon} {x.label}</p>
+                  <p className="font-num tabular mt-1 text-[20px] font-semibold text-ink">{x.n}</p>
+                  <p className="font-num tabular text-[11.5px] text-muted">{money(x.cents)}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        );
+      })()}
 
       {list.length === 0 ? (
         <EmptyState icon={<CalendarClock size={24} />} title="Aucune charge" text="Loyer, électricité, assurances… Elles alimentent le reste à vivre." action={<Button onClick={() => setEdit("new")}>Ajouter une charge</Button>} />
@@ -69,26 +90,7 @@ export default function ChargesPage() {
             const cat = d.categories.find((c) => c.id === r.category_id);
             const o = occ.find((x) => x.recurring.id === r.id);
             return (
-              <div key={r.id} className={`flex items-center gap-3 ${r.active ? "" : "opacity-40"}`}>
-              <button onClick={() => setEdit(r)} className="press flex min-w-0 flex-1 items-center gap-3 py-2.5 text-left">
-                <IconBubble name={cat?.icon ?? "repeat"} color={cat?.color ?? "#9C8FE0"} />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[15px] font-medium text-ink">{r.label}</span>
-                  <span className="block truncate text-[13px] text-muted">
-                    {FREQ.find((f) => f.value === r.frequency)?.label} · le {r.day_of_month}
-                  </span>
-                </span>
-                <span className="text-right">
-                  <span className="tabular block font-semibold text-ink">{money(r.amount_cents)}</span>
-                  {o && (
-                    <span className={`block text-[11px] font-medium ${o.status === "paid" ? "text-ok" : "text-muted"}`}>
-                      {o.status === "paid" ? "Payée" : o.held ? "Pas encore payée" : r.auto_pay !== false ? `Auto le ${r.day_of_month}` : "À venir"}
-                    </span>
-                  )}
-                </span>
-              </button>
-              {o && <ChargeCheck o={o} />}
-            </div>
+              <ChargeRow key={r.id} r={r} o={o} cat={cat} onEdit={() => setEdit(r)} />
             );
                   })}
                 </Card>
@@ -98,7 +100,7 @@ export default function ChargesPage() {
         </>
       )}
       <p className="mt-6 px-2 text-center text-xs text-muted">
-        Coche le rond quand une charge est payée. En prélèvement automatique, c&apos;est fait tout seul à la date. Une charge payée compte dans les dépenses du mois.
+        <Zap size={11} className="inline" /> Auto : la charge se coche toute seule à sa date. Sinon, coche le rond quand elle est passée sur ton compte. Une charge cochée compte dans les dépenses du mois.
       </p>
       <ChargeSheet item={edit} onClose={() => setEdit(null)} />
     </Page>
@@ -217,5 +219,64 @@ function ChargeSheet({ item, onClose }: { item: RecurringExpense | "new" | null;
         </Card>
       </div>
     </Sheet>
+  );
+}
+
+const dayFmt = (iso: string) => Number(iso.slice(8, 10));
+
+/** Une charge : à quoi (icône, nom), combien, quand, et deux interrupteurs : Auto et Payée. */
+function ChargeRow({ r, o, cat, onEdit }: { r: RecurringExpense; o?: Occurrence; cat?: { icon: string; color: string }; onEdit: () => void }) {
+  const d = useData();
+  const auto = r.auto_pay !== false;
+  const t = today();
+  const status = !o
+    ? { text: "Pas ce mois-ci", c: "text-muted" }
+    : o.status === "paid"
+      ? { text: `Payée le ${dayFmt(o.due_on)}`, c: "text-ok" }
+      : o.due_on < t || o.held
+        ? { text: `Le ${dayFmt(o.due_on)} · pas cochée`, c: "text-peche" }
+        : auto
+          ? { text: `Prélevée le ${dayFmt(o.due_on)}`, c: "text-muted" }
+          : { text: `À cocher le ${dayFmt(o.due_on)}`, c: "text-muted" };
+
+  async function toggleAuto() {
+    const next = !auto;
+    const ok = await d.update("recurring_expenses", r.id, { auto_pay: next });
+    if (!ok) return;
+    if (next && o && o.status === "pending" && o.due_on <= t) {
+      // Date déjà passée : on la coche tout de suite
+      await d.payCharge({ ...o, recurring: { ...r, auto_pay: true } }, true);
+      d.toast(`${r.label} : automatique, cochée payée`);
+    } else {
+      d.toast(next ? `${r.label} : se cochera toute seule le ${r.day_of_month}` : `${r.label} : à cocher à la main`);
+    }
+  }
+
+  return (
+    <div className={`flex items-center gap-3 py-2.5 ${r.active ? "" : "opacity-40"}`}>
+      <button onClick={onEdit} className="press shrink-0" aria-label={`Modifier ${r.label}`}>
+        <IconBubble name={cat?.icon ?? "repeat"} color={cat?.color ?? "#9C8FE0"} />
+      </button>
+      <div className="min-w-0 flex-1">
+        <button onClick={onEdit} className="press flex w-full min-w-0 items-baseline justify-between gap-2 text-left">
+          <span className="truncate text-[15px] font-medium text-ink">{r.label}</span>
+          <span className="font-num tabular shrink-0 text-[15px] font-semibold text-ink">{money(r.amount_cents)}</span>
+        </button>
+        <div className="mt-1 flex items-center gap-2">
+          <button
+            onClick={toggleAuto}
+            aria-pressed={auto}
+            aria-label={auto ? "Prélèvement automatique activé" : "Activer le prélèvement automatique"}
+            className={`press flex h-6 items-center gap-1 rounded-full px-2 text-[11.5px] font-semibold transition-colors ${
+              auto ? "bg-lavande/20 text-lavande" : "bg-surface-2 text-muted"
+            }`}
+          >
+            <Zap size={11} className={auto ? "fill-current" : ""} /> {auto ? "Auto" : "Manuel"}
+          </button>
+          <span className={`truncate text-[12.5px] font-medium ${status.c}`}>{status.text}</span>
+        </div>
+      </div>
+      {o && <ChargeCheck o={o} />}
+    </div>
   );
 }

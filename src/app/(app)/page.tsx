@@ -281,7 +281,7 @@ export default function HomePage() {
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[15px] font-medium text-ink">{o.recurring.label}</span>
                   <span className="block text-[13px] text-muted">
-                    {relativeDue(o.due_on)} · {d.nameOf(o.recurring.assigned_to)}
+                    {d.nameOf(o.recurring.assigned_to)} · {relativeDue(o.due_on).toLowerCase()} · {o.recurring.auto_pay !== false ? "auto" : "à cocher"}
                   </span>
                 </span>
                 <span className="tabular text-[15px] font-semibold text-ink">{money(o.amount_cents)}</span>
