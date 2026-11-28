@@ -127,7 +127,7 @@ export default function HomePage() {
               <div className="mt-2 flex gap-1 rounded-full bg-surface-2 p-1 text-[12.5px] font-semibold">
                 {[
                   [false, "Maintenant"],
-                  [true, `Après charges (−${money(s.pendingCharges).replace(/,\d\d\s?€/, " €")})`],
+                  [true, "Après charges"],
                 ].map(([v, label]) => (
                   <button
                     key={String(v)}
