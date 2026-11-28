@@ -259,7 +259,7 @@ export function homeSummary(params: {
   const { expense, saving } = totals(monthTx, scope);
   const { income, estimated } = monthIncome(params);
   const occ = occurrencesForMonth(recurring, scheduled, month, scope);
-  const pendingCharges = occ.filter((o) => o.status === "pending").reduce((s, o) => s + o.amount_cents, 0);
+  const pendingCharges = occ.filter((o) => o.status === "pending" && !(o.held && o.due_on < today())).reduce((s, o) => s + o.amount_cents, 0);
   const now = new Date();
   const isCurrent = monthKey(now) === monthKey(month);
   const isPast = month < new Date(now.getFullYear(), now.getMonth(), 1);
@@ -410,8 +410,27 @@ export function personForecast(params: {
   const saving = mine.filter((t) => t.kind === "saving").reduce((s, t) => s + t.amount_cents, 0);
   const common =
     monthTx.filter((t) => t.kind === "expense" && t.assigned_to === null).reduce((s, t) => s + t.amount_cents, 0) +
-    occ.filter((o) => o.status === "pending" && o.recurring.assigned_to === null).reduce((s, o) => s + o.amount_cents, 0);
-  const pendingMine = occ.filter((o) => o.status === "pending" && o.recurring.assigned_to === userId).reduce((s, o) => s + o.amount_cents, 0);
+    occ.filter((o) => o.status === "pending" && !(o.held && o.due_on < today()) && o.recurring.assigned_to === null).reduce((s, o) => s + o.amount_cents, 0);
+  const pendingMine = occ.filter((o) => o.status === "pending" && !(o.held && o.due_on < today()) && o.recurring.assigned_to === userId).reduce((s, o) => s + o.amount_cents, 0);
   const commonPart = Math.round(common * share);
   return { income, commonPart, personal, saving, pendingMine, left: income - commonPart - personal - saving - pendingMine };
+}
+
+/**
+ * Solde estimé du compte perso : le solde saisi (lu dans l'appli de la banque)
+ * plus tout ce qui a été saisi à son nom depuis — revenus en plus, dépenses et épargne en moins.
+ */
+export function bankBalance(profile: { id: string; bank_balance_cents?: number | null; bank_balance_at?: string | null } | undefined, transactions: Transaction[]) {
+  if (!profile || profile.bank_balance_cents == null || !profile.bank_balance_at) return null;
+  const since = new Date(profile.bank_balance_at).getTime();
+  let delta = 0;
+  let count = 0;
+  for (const t of transactions) {
+    if (t.assigned_to !== profile.id) continue;
+    const at = t.created_at ? new Date(t.created_at).getTime() : Date.now();
+    if (at <= since) continue;
+    delta += t.kind === "income" ? t.amount_cents : -t.amount_cents;
+    count++;
+  }
+  return { cents: profile.bank_balance_cents + delta, base: profile.bank_balance_cents, at: profile.bank_balance_at, delta, count };
 }

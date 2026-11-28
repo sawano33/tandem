@@ -7,6 +7,9 @@ export type Profile = {
   avatar_emoji: string | null;
   color: string;
   notification_prefs?: NotificationPrefs | null;
+  /** Solde du compte perso tel que lu dans l'appli de la banque, et quand il a été saisi. */
+  bank_balance_cents?: number | null;
+  bank_balance_at?: string | null;
 };
 
 export type NotificationPrefs = {

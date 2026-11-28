@@ -16,6 +16,7 @@ import { MonthSwitcher, ScopeSwitcher } from "@/components/Switchers";
 import { SplitBar } from "@/components/Charts";
 import { UsageCard } from "@/components/UsageCard";
 import { ChargeCheck } from "@/components/ChargeCheck";
+import { BankBalanceCard } from "@/components/BankBalance";
 import { Avatar, Card, Page, Progress, SectionTitle, cx } from "@/components/ui";
 
 export default function HomePage() {
@@ -126,6 +127,9 @@ export default function HomePage() {
           </section>
         );
       })()}
+
+      {/* Solde du compte perso, recalé sur la banque */}
+      {s.isCurrent && <BankBalanceCard />}
 
       {/* Camembert d'utilisation */}
       <div className="mt-3">

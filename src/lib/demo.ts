@@ -33,8 +33,8 @@ export function buildDemo() {
     split_settings: { mode: "equal_rate", incomes: { [DEMO_G]: 200600, [DEMO_E]: 100600 } },
   };
   const profiles: Profile[] = [
-    { id: DEMO_G, first_name: "Guillaume", avatar_url: null, avatar_emoji: null, color: "#C5B6F2" },
-    { id: DEMO_E, first_name: "Emma", avatar_url: null, avatar_emoji: null, color: "#FFAE97" },
+    { id: DEMO_G, first_name: "Guillaume", avatar_url: null, avatar_emoji: null, color: "#C5B6F2", bank_balance_cents: 201841, bank_balance_at: new Date(Date.now() - 36e5).toISOString() },
+    { id: DEMO_E, first_name: "Emma", avatar_url: null, avatar_emoji: null, color: "#FFAE97", bank_balance_cents: -3550, bank_balance_at: new Date(Date.now() - 864e5).toISOString() },
   ];
   const members: Member[] = [
     { household_id: H, user_id: DEMO_G, role: "owner", joined_at: "2026-01-01T10:00:00Z" },
