@@ -134,6 +134,8 @@ export type RecurringExpense = {
   end_date: string | null;
   assigned_to: UUID | null;
   active: boolean;
+  /** prélèvement automatique : marquée payée toute seule à sa date */
+  auto_pay?: boolean;
 };
 
 export type ScheduledTransaction = {
@@ -142,7 +144,7 @@ export type ScheduledTransaction = {
   recurring_expense_id: UUID;
   due_on: string;
   amount_cents: number;
-  status: "paid" | "skipped";
+  status: "paid" | "skipped" | "unpaid";
   transaction_id: UUID | null;
 };
 

@@ -7,6 +7,7 @@ import { TabBar } from "./TabBar";
 import { AddSheet } from "./AddSheet";
 import { Toasts } from "./Toasts";
 import { NotificationEngine } from "./NotificationEngine";
+import { AutoSettle } from "./ChargeCheck";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { ready } = useData();
@@ -21,6 +22,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <AddSheet />
           <Toasts />
           <NotificationEngine />
+          <AutoSettle />
         </>
       )}
       {splash && <Splash ready={ready} onDone={done} />}

@@ -8,6 +8,7 @@ import { centsToInput, money, monthStart, parseAmount, today } from "@/lib/forma
 import { occurrencesForMonth } from "@/lib/finance";
 import { Icon, IconBubble } from "@/lib/icons";
 import type { Frequency, RecurringExpense } from "@/lib/types";
+import { ChargeCheck } from "@/components/ChargeCheck";
 import { Avatar, Button, Card, Chip, EmptyState, Field, Page, PageHeader, Sheet, Toggle, inputClass } from "@/components/ui";
 
 const FREQ: { value: Frequency; label: string; perMonth: number }[] = [
@@ -41,7 +42,7 @@ export default function ChargesPage() {
         <p className="text-sm text-white/70">Charges fixes par mois (moyenne)</p>
         <p className="font-num tabular text-[32px] font-semibold">{money(Math.round(monthly))}</p>
         <p className="mt-1 text-[13px] text-white/70">
-          Ce mois-ci : {occ.filter((o) => o.status === "paid").length} réglées · {occ.filter((o) => o.status === "pending").length} à venir
+          Ce mois-ci : {occ.filter((o) => o.status === "paid").length} payées · {occ.filter((o) => o.status === "pending").length} à venir
         </p>
       </Card>
 
@@ -68,7 +69,8 @@ export default function ChargesPage() {
             const cat = d.categories.find((c) => c.id === r.category_id);
             const o = occ.find((x) => x.recurring.id === r.id);
             return (
-              <button key={r.id} onClick={() => setEdit(r)} className={`press flex w-full items-center gap-3 py-2.5 text-left ${r.active ? "" : "opacity-40"}`}>
+              <div key={r.id} className={`flex items-center gap-3 ${r.active ? "" : "opacity-40"}`}>
+              <button onClick={() => setEdit(r)} className="press flex min-w-0 flex-1 items-center gap-3 py-2.5 text-left">
                 <IconBubble name={cat?.icon ?? "repeat"} color={cat?.color ?? "#9C8FE0"} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[15px] font-medium text-ink">{r.label}</span>
@@ -78,9 +80,15 @@ export default function ChargesPage() {
                 </span>
                 <span className="text-right">
                   <span className="tabular block font-semibold text-ink">{money(r.amount_cents)}</span>
-                  {o && <span className={`block text-[11px] font-medium ${o.status === "paid" ? "text-ok" : "text-muted"}`}>{o.status === "paid" ? "Réglée" : o.status === "skipped" ? "Ignorée" : "À venir"}</span>}
+                  {o && (
+                    <span className={`block text-[11px] font-medium ${o.status === "paid" ? "text-ok" : "text-muted"}`}>
+                      {o.status === "paid" ? "Payée" : o.held ? "Pas encore payée" : r.auto_pay !== false ? `Auto le ${r.day_of_month}` : "À venir"}
+                    </span>
+                  )}
                 </span>
               </button>
+              {o && <ChargeCheck o={o} />}
+            </div>
             );
                   })}
                 </Card>
@@ -90,7 +98,7 @@ export default function ChargesPage() {
         </>
       )}
       <p className="mt-6 px-2 text-center text-xs text-muted">
-        Quand vous saisissez une dépense qui correspond à une charge prévue, TANDEM propose de la rattacher pour éviter de la compter deux fois.
+        Coche le rond quand une charge est payée. En prélèvement automatique, c&apos;est fait tout seul à la date. Une charge payée compte dans les dépenses du mois.
       </p>
       <ChargeSheet item={edit} onClose={() => setEdit(null)} />
     </Page>
@@ -108,6 +116,7 @@ function ChargeSheet({ item, onClose }: { item: RecurringExpense | "new" | null;
   const [cat, setCat] = useState<string | null>(null);
   const [who, setWho] = useState<string | null>(null);
   const [active, setActive] = useState(true);
+  const [auto, setAuto] = useState(true);
   const k = item ? (r?.id ?? "new") : "";
   if (k !== key) {
     setKey(k);
@@ -118,6 +127,7 @@ function ChargeSheet({ item, onClose }: { item: RecurringExpense | "new" | null;
     setCat(r?.category_id ?? d.categories.find((c) => c.name === "Logement")?.id ?? null);
     setWho(r?.assigned_to ?? d.user?.id ?? null);
     setActive(r?.active ?? true);
+    setAuto(r?.auto_pay ?? true);
   }
   const cents = parseAmount(amount);
   const dayN = Math.min(31, Math.max(1, Number(day) || 1));
@@ -126,7 +136,7 @@ function ChargeSheet({ item, onClose }: { item: RecurringExpense | "new" | null;
     if (!cents || !label.trim() || !who) return;
     const row = {
       label: label.trim(), amount_cents: cents, frequency: freq, day_of_month: dayN, category_id: cat, account_id: null,
-      assigned_to: who, active, ...(r ? {} : { start_date: today().slice(0, 8) + "01" }),
+      assigned_to: who, active, auto_pay: auto, ...(r ? {} : { start_date: today().slice(0, 8) + "01" }),
     };
     const ok = r ? await d.update("recurring_expenses", r.id, row) : !!(await d.insert("recurring_expenses", row));
     if (ok) {
@@ -198,11 +208,13 @@ function ChargeSheet({ item, onClose }: { item: RecurringExpense | "new" | null;
             ))}
           </div>
         </div>
-        {r && (
-          <Card>
-            <Toggle checked={active} onChange={setActive} label="Charge active" />
-          </Card>
-        )}
+        <Card className="space-y-3">
+          <Toggle checked={auto} onChange={setAuto} label="Prélèvement automatique" />
+          <p className="text-[12px] leading-snug text-muted">
+            {auto ? "Marquée payée toute seule à sa date, et comptée dans les dépenses." : "À cocher toi-même quand c'est payé."}
+          </p>
+          {r && <Toggle checked={active} onChange={setActive} label="Charge active" />}
+        </Card>
       </div>
     </Sheet>
   );

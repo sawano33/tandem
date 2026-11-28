@@ -51,6 +51,8 @@ type Ctx = Tables & {
   updateHousehold: (patch: Partial<Household>) => Promise<boolean>;
   createInvitation: () => Promise<string | null>;
   signOut: () => Promise<void>;
+  payCharge: (o: { recurring: RecurringExpense; due_on: string; amount_cents: number }, silent?: boolean) => Promise<boolean>;
+  unpayCharge: (o: { recurring: RecurringExpense; due_on: string }) => Promise<boolean>;
   demo: boolean;
   // ajout rapide
   sheet: SheetState;
@@ -391,6 +393,62 @@ export function DataProvider({ children }: { children: ReactNode }) {
     [supabase, household, toast],
   );
 
+  const payCharge = useCallback(
+    async (o: { recurring: RecurringExpense; due_on: string; amount_cents: number }, silent = false) => {
+      if (IS_DEMO) {
+        const tid = crypto.randomUUID();
+        setData((d) => {
+          const existing = d.scheduled_transactions.find((x) => x.recurring_expense_id === o.recurring.id && x.due_on === o.due_on);
+          if (existing && existing.status !== "unpaid") return d;
+          const t: Transaction = {
+            id: tid, household_id: "demo", kind: "expense", amount_cents: o.amount_cents, label: o.recurring.label,
+            category_id: o.recurring.category_id, account_id: null, occurred_on: o.due_on, assigned_to: o.recurring.assigned_to,
+            note: null, created_by: user?.id ?? null, created_at: new Date().toISOString(),
+          };
+          return {
+            ...d,
+            transactions: [t, ...d.transactions].sort((a, b) => b.occurred_on.localeCompare(a.occurred_on)),
+            scheduled_transactions: [...d.scheduled_transactions.filter((x) => x !== existing), { id: crypto.randomUUID(), household_id: "demo", recurring_expense_id: o.recurring.id, due_on: o.due_on, amount_cents: o.amount_cents, status: "paid", transaction_id: tid }],
+          };
+        });
+        return true;
+      }
+      const { error } = await supabase.rpc("pay_charge", { p_recurring: o.recurring.id, p_due: o.due_on, p_amount: o.amount_cents });
+      if (error) {
+        if (!silent) toast(friendlyError(error.message), "error");
+        return false;
+      }
+      await reload("transactions", "scheduled_transactions");
+      return true;
+    },
+    [supabase, reload, toast, user],
+  );
+
+  const unpayCharge = useCallback(
+    async (o: { recurring: RecurringExpense; due_on: string }) => {
+      if (IS_DEMO) {
+        setData((d) => {
+          const s = d.scheduled_transactions.find((x) => x.recurring_expense_id === o.recurring.id && x.due_on === o.due_on);
+          if (!s) return d;
+          return {
+            ...d,
+            scheduled_transactions: d.scheduled_transactions.map((x) => (x === s ? { ...x, status: "unpaid" as const, transaction_id: null } : x)),
+            transactions: d.transactions.filter((t) => t.id !== s.transaction_id),
+          };
+        });
+        return true;
+      }
+      const { error } = await supabase.rpc("unpay_charge", { p_recurring: o.recurring.id, p_due: o.due_on });
+      if (error) {
+        toast(friendlyError(error.message), "error");
+        return false;
+      }
+      await reload("transactions", "scheduled_transactions");
+      return true;
+    },
+    [supabase, reload, toast],
+  );
+
   const createInvitation = useCallback(async () => {
     if (IS_DEMO) return "DEMO42";
     const { data: code, error } = await supabase.rpc("create_invitation");
@@ -442,6 +500,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     updateProfile,
     updateHousehold,
     createInvitation,
+    payCharge,
+    unpayCharge,
     signOut,
     user,
     household,

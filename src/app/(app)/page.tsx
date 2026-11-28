@@ -15,6 +15,7 @@ import { LogoLoop } from "@/components/Logo";
 import { MonthSwitcher, ScopeSwitcher } from "@/components/Switchers";
 import { SplitBar } from "@/components/Charts";
 import { UsageCard } from "@/components/UsageCard";
+import { ChargeCheck } from "@/components/ChargeCheck";
 import { Avatar, Card, Page, Progress, SectionTitle, cx } from "@/components/ui";
 
 export default function HomePage() {
@@ -214,14 +215,14 @@ export default function HomePage() {
         {charges.length === 0 ? (
           <div className="flex items-center gap-3 py-3 text-sm text-muted">
             <CalendarClock size={20} />
-            {d.recurring_expenses.length ? "Toutes les charges sont réglées." : "Ajoutez vos charges fixes (loyer, crédit…)."}
+            {d.recurring_expenses.length ? "Toutes les charges du mois sont payées." : "Ajoutez vos charges fixes (loyer, crédit…)."}
           </div>
         ) : (
           charges.map((o) => {
             const cat = d.categories.find((c) => c.id === o.recurring.category_id);
             return (
+              <div key={o.recurring.id + o.due_on} className="flex items-center gap-3">
               <button
-                key={o.recurring.id + o.due_on}
                 onClick={() =>
                   d.openSheet({
                     kind: "expense",
@@ -229,7 +230,7 @@ export default function HomePage() {
                     preset: { amount_cents: o.amount_cents, label: o.recurring.label, category_id: o.recurring.category_id, assigned_to: o.recurring.assigned_to, occurred_on: o.due_on },
                   })
                 }
-                className="press flex w-full items-center gap-3 py-2.5 text-left"
+                className="press flex min-w-0 flex-1 items-center gap-3 py-2.5 text-left"
               >
                 <IconBubble name={cat?.icon ?? "repeat"} color={cat?.color ?? "#9C8FE0"} />
                 <span className="min-w-0 flex-1">
@@ -240,6 +241,8 @@ export default function HomePage() {
                 </span>
                 <span className="tabular text-[15px] font-semibold text-ink">{money(o.amount_cents)}</span>
               </button>
+              <ChargeCheck o={o} size={28} />
+              </div>
             );
           })
         )}

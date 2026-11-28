@@ -69,6 +69,8 @@ export type Occurrence = {
   due_on: string;
   amount_cents: number;
   status: "pending" | "paid" | "skipped";
+  /** décochée à la main : le prélèvement automatique ne la recoche pas */
+  held?: boolean;
   scheduled?: ScheduledTransaction;
 };
 
@@ -120,7 +122,8 @@ export function occurrencesForMonth(
         recurring: r,
         due_on: due,
         amount_cents: s?.amount_cents ?? r.amount_cents,
-        status: s ? s.status : "pending",
+        status: !s || s.status === "unpaid" ? "pending" : s.status,
+        held: s?.status === "unpaid",
         scheduled: s,
       });
     }
