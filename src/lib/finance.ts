@@ -265,7 +265,9 @@ export function homeSummary(params: {
   const isPast = month < new Date(now.getFullYear(), now.getMonth(), 1);
   // Ce qu'il reste une fois les dépenses, l'épargne et les charges encore à venir retirées des revenus
   const resteAVivre = income - expense - saving - (isPast ? 0 : pendingCharges);
-  return { income, estimated, expense, saving, pendingCharges, resteAVivre, isCurrent, isPast, occ };
+  // Ce qu'il reste tout de suite, avant de retirer les charges qui ne sont pas encore passées
+  const dispo = income - expense - saving;
+  return { income, estimated, expense, saving, pendingCharges, resteAVivre, dispo, isCurrent, isPast, occ };
 }
 
 /** Camembert d'utilisation des revenus : chaque catégorie, l'épargne, les charges à venir et le reste. */

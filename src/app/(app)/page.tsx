@@ -7,7 +7,7 @@ import { Bell, CalendarClock, ChevronRight, Info, TriangleAlert } from "lucide-r
 import { useData } from "@/lib/store";
 import { daysInMonth, money, moneyShort, monthName, pct, relativeDue, today } from "@/lib/format";
 import {
-  budgetLines, byCategory, computeSplit, goalInScope, goalSaved, homeSummary, monthIncome, occurrencesForMonth,
+  bankBalance, budgetLines, byCategory, computeSplit, goalInScope, goalSaved, homeSummary, monthIncome, occurrencesForMonth,
   personForecast, txOfMonth, upcomingCharges, usageSlices,
 } from "@/lib/finance";
 import { IconBubble } from "@/lib/icons";
@@ -24,6 +24,7 @@ export default function HomePage() {
   const { scope, month } = d;
   const router = useRouter();
   const [explain, setExplain] = useState(false);
+  const [afterCharges, setAfterCharges] = useState(false);
 
   const memberIds = d.members.map((m) => m.user_id);
   const planned = d.household?.split_settings?.incomes;
@@ -83,13 +84,29 @@ export default function HomePage() {
 
       {/* Reste du mois : carte sobre, chiffre en grand, revenus / dépenses / épargne dessous */}
       {(() => {
-        const engaged = s.expense + s.saving + (s.isPast ? 0 : s.pendingCharges);
+        // Pour le mois en cours, le « disponible » colle au solde de la banque : pour chaque personne
+        // qui a recalé son compte, son solde remplace le calcul revenus − dépenses.
+        let dispo = s.dispo;
+        let fromBank = false;
+        if (s.isCurrent) {
+          for (const m of d.members) {
+            if (scope !== "all" && m.user_id !== scope) continue;
+            const b = bankBalance(m.profile, d.transactions);
+            if (!b) continue;
+            const own = homeSummary({ transactions: d.transactions, recurring: d.recurring_expenses, scheduled: d.scheduled_transactions, month, scope: m.user_id, memberIds, planned }).dispo;
+            dispo += b.cents - own;
+            fromBank = true;
+          }
+        }
+        const showAfter = !s.isPast && afterCharges && s.pendingCharges > 0;
+        const shown = s.isPast ? s.resteAVivre : showAfter ? dispo - s.pendingCharges : dispo;
+        const engaged = s.expense + s.saving + (showAfter ? s.pendingCharges : 0);
         const ratio = s.income ? engaged / s.income : 0;
         return (
           <section className="animate-rise mt-4 rounded-[26px] border border-line bg-surface p-5">
             <div className="flex items-center justify-between">
               <button onClick={() => setExplain((v) => !v)} className="flex items-center gap-1.5 text-[14px] font-medium text-muted">
-                {s.isPast ? "Bilan du mois" : "Reste à vivre"} <Info size={14} />
+                {s.isPast ? "Bilan du mois" : showAfter ? "Reste après charges" : fromBank ? "Sur le compte" : "Disponible"} <Info size={14} />
               </button>
               {!s.isPast && (
                 <span className="rounded-full bg-surface-2 px-2.5 py-1 text-[12px] font-medium text-muted">
@@ -97,9 +114,31 @@ export default function HomePage() {
                 </span>
               )}
             </div>
-            <p key={`${month.getTime()}-${scope}`} className={cx("num-in font-num tabular mt-1 text-[44px] font-semibold leading-tight", s.resteAVivre < 0 ? "text-over" : "text-ink")}>
-              {money(s.resteAVivre)}
-            </p>
+            <button
+              onClick={() => !s.isPast && s.pendingCharges > 0 && setAfterCharges((v) => !v)}
+              aria-label={showAfter ? "Voir le disponible" : "Voir le reste après les charges à venir"}
+              className="block text-left"
+            >
+              <p key={`${month.getTime()}-${scope}-${showAfter}`} className={cx("num-in font-num tabular mt-1 text-[44px] font-semibold leading-tight", shown < 0 ? "text-over" : "text-ink")}>
+                {money(shown)}
+              </p>
+            </button>
+            {!s.isPast && s.pendingCharges > 0 && (
+              <div className="mt-2 flex gap-1 rounded-full bg-surface-2 p-1 text-[12.5px] font-semibold">
+                {[
+                  [false, "Maintenant"],
+                  [true, `Après charges (−${money(s.pendingCharges).replace(/,\d\d\s?€/, " €")})`],
+                ].map(([v, label]) => (
+                  <button
+                    key={String(v)}
+                    onClick={() => setAfterCharges(v as boolean)}
+                    className={cx("press flex-1 rounded-full px-3 py-1.5 transition-colors", afterCharges === v ? "bg-strong text-on-strong" : "text-muted")}
+                  >
+                    {label as string}
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-track">
               <div
                 className="grow-x h-full rounded-full transition-[width] duration-700"
@@ -109,7 +148,7 @@ export default function HomePage() {
             <p className="mt-1.5 text-[12px] text-muted">{Math.round(ratio * 100)} % des revenus déjà engagés</p>
             {explain && (
               <p className="animate-fade mt-3 rounded-2xl bg-surface-2 p-3 text-[12.5px] leading-snug text-muted">
-                Revenus{s.estimated ? " (salaire prévu)" : ""} − dépenses − épargne{!s.isPast && " − charges fixes encore à venir"}.
+                {fromBank ? "Solde de la banque (recalé), qui bouge avec chaque saisie" : <>Revenus{s.estimated ? " (salaire prévu)" : ""} − dépenses − épargne</>}{showAfter && " − charges fixes pas encore passées (à cocher quand elles passent)"}.
               </p>
             )}
             <div className="mt-4 grid grid-cols-3 gap-2 border-t border-line pt-4">
