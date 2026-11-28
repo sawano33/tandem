@@ -139,10 +139,12 @@ export function upcomingCharges(
   limit = 4,
 ) {
   const now = new Date();
+  const t = today();
+  // Seulement ce qui arrive : une date passée non cochée n'est pas « en retard ».
   const list = [
     ...occurrencesForMonth(recurring, scheduled, now, scope),
     ...occurrencesForMonth(recurring, scheduled, addMonths(now, 1), scope),
-  ].filter((o) => o.status === "pending");
+  ].filter((o) => o.status === "pending" && o.due_on >= t);
   return list.slice(0, limit);
 }
 

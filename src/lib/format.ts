@@ -59,7 +59,7 @@ export function relativeDue(iso: string) {
   const diff = Math.round((parseISODate(iso).getTime() - parseISODate(today()).getTime()) / 864e5);
   if (diff === 0) return "Aujourd'hui";
   if (diff === 1) return "Demain";
-  if (diff < 0) return `En retard de ${-diff} j`;
+  if (diff < 0) return dayShort(iso);
   if (diff < 7) return `Dans ${diff} jours`;
   return dayShort(iso);
 }

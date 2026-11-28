@@ -235,7 +235,7 @@ export default function HomePage() {
                 <IconBubble name={cat?.icon ?? "repeat"} color={cat?.color ?? "#9C8FE0"} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[15px] font-medium text-ink">{o.recurring.label}</span>
-                  <span className={`block text-[13px] ${o.due_on < today() ? "text-over" : "text-muted"}`}>
+                  <span className="block text-[13px] text-muted">
                     {relativeDue(o.due_on)} · {d.nameOf(o.recurring.assigned_to)}
                   </span>
                 </span>
