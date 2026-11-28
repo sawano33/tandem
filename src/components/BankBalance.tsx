@@ -95,7 +95,7 @@ function RecalSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
       title="Solde de ton compte"
       footer={<Button onClick={save} disabled={cents == null} className="mb-3">Recaler</Button>}
     >
-      <Field label="Solde affiché par ta banque (€)" hint="Prends le solde qui inclut les opérations carte en cours. Ensuite, chaque revenu, dépense ou épargne que tu saisis à ton nom le fait bouger. Recale quand tu veux : ce qui a été saisi avant est déjà dedans.">
+      <Field label="Solde affiché par ta banque (€)" hint="Prends le solde qui inclut les opérations carte en cours. Ensuite, chaque revenu, dépense ou épargne daté d'aujourd'hui ou après le fait bouger. Ce qui est daté d'avant est considéré comme déjà dans le solde de la banque.">
         <input
           value={value}
           onChange={(e) => setValue(e.target.value.replace(/[^\d,.\s−-]/g, ""))}

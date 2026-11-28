@@ -420,17 +420,20 @@ export function personForecast(params: {
 
 /**
  * Solde estimé du compte perso : le solde saisi (lu dans l'appli de la banque)
- * plus tout ce qui a été saisi à son nom depuis — revenus en plus, dépenses et épargne en moins.
+ * plus tout ce qui a été saisi à son nom depuis, daté du jour du recalage ou après — revenus en plus, dépenses et épargne en moins.
  */
 export function bankBalance(profile: { id: string; bank_balance_cents?: number | null; bank_balance_at?: string | null } | undefined, transactions: Transaction[]) {
   if (!profile || profile.bank_balance_cents == null || !profile.bank_balance_at) return null;
   const since = new Date(profile.bank_balance_at).getTime();
+  const sinceDay = toISODate(new Date(profile.bank_balance_at));
   let delta = 0;
   let count = 0;
   for (const t of transactions) {
     if (t.assigned_to !== profile.id) continue;
     const at = t.created_at ? new Date(t.created_at).getTime() : Date.now();
     if (at <= since) continue;
+    // Une opération datée d'avant le recalage est déjà dans le solde de la banque : on ne la retire pas une 2e fois
+    if (t.occurred_on < sinceDay) continue;
     delta += t.kind === "income" ? t.amount_cents : -t.amount_cents;
     count++;
   }
